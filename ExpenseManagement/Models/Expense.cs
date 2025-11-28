@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace ExpenseManagement.Models
 {
@@ -25,6 +26,9 @@ namespace ExpenseManagement.Models
         public string? NoteImageUrl { get; set; }
         [StringLength(300)]
         public string? ProofImageUrl { get; set; }
+
+        public int CategoryId { get; set; }
+        [JsonIgnore]
         public Category? Category { get; set; }
 
 

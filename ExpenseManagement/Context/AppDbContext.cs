@@ -9,7 +9,7 @@ namespace ExpenseManagement.Context
         {    
         }
 
-        public DbSet<Category>? Category { get; set; }
-        public DbSet<Expense>? Expense { get; set; }
+        public DbSet<Category>? Categories { get; set; }
+        public DbSet<Expense>? Expenses { get; set; }
     }
 }
