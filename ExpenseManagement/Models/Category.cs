@@ -9,6 +9,7 @@ namespace ExpenseManagement.Models
         {
             Expenses = new Collection<Expense>();
         }
+
         [Key]
         public int CategoryId { get; set; }
         [Required]
