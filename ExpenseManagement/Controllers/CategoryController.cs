@@ -72,5 +72,19 @@ namespace ExpenseManagement.Controllers
             _repository.Update(category);
             return Ok(category);
         }
+
+        [HttpDelete("{id:int}")]
+        public ActionResult Delete(int id) { 
+            var categoria = _repository.GetCategoryById(id);
+
+            if (categoria == null)
+            {
+                _logger.LogWarning("Category with id {CategoryId} not found for deletion.", id);
+                return NotFound($"Categoria com id {id} não encontrada...");
+            }
+
+            var categoriaExcluida = _repository.Delete(id);
+            return Ok(categoriaExcluida);
+        }
     }
 }
