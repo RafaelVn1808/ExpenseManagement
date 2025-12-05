@@ -8,8 +8,8 @@ namespace ExpenseManagement.Services
     {
         Task<IEnumerable<CategoryDTO>> GetCategories();
         Task<CategoryDTO> GetCategoryById(int categoryId);
-        Task<CategoryDTO> AddCategory(CategoryDTO category);
-        Task<CategoryDTO> UpdateCategory(CategoryDTO category);
-        Task<CategoryDTO> RemoveCategory(int categoryId);
+        Task AddCategory(CategoryDTO category);
+        Task UpdateCategory(CategoryDTO category);
+        Task RemoveCategory(int categoryId);
     }
 }
