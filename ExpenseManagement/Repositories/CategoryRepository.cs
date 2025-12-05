@@ -14,17 +14,17 @@ namespace ExpenseManagement.Repositories
             _context = context;
         }
 
-        public IEnumerable<Category> GetCategories()
+        public async Task<IEnumerable<Category>> GetCategories()
         {
-            return _context.Categories.ToList();
+            return await _context.Categories.ToListAsync();
                
         }
 
-        public Category GetCategoryById(int categoryId)
+        public async Task<Category> GetCategoryById(int categoryId)
         {
             return _context.Categories.FirstOrDefault(c => c.CategoryId == categoryId);
         }
-        public Category Create(Category category)
+        public async Task<Category> Create(Category category)
         {
             if (category == null)
             {
@@ -32,11 +32,11 @@ namespace ExpenseManagement.Repositories
             }
 
             _context.Categories.Add(category);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return category;
         }
 
-        public Category Update(Category category)
+        public async Task<Category> Update(Category category)
         {
             if (category == null)
             {
@@ -44,20 +44,20 @@ namespace ExpenseManagement.Repositories
             }
 
             _context.Entry(category).State = EntityState.Modified;
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return category;
         }
 
-        public Category Delete(int categoryId)
+        public async Task<Category> Delete(int categoryId)
         {
-            var category = _context.Categories.Find(categoryId);
+            var category = await _context.Categories.FindAsync(categoryId);
 
             if (category != null)
             {throw new ArgumentNullException(nameof(category));
 
             }
             _context.Categories.Remove(category);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return category;
 
         }
