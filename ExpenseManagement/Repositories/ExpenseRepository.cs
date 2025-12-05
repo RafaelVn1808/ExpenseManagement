@@ -13,17 +13,17 @@ namespace ExpenseManagement.Repositories
             _context = context;
         }
 
-        public IEnumerable<Expense> GetExpenses()
+        public async Task<IEnumerable<Expense>> GetExpenses()
         {
-            return _context.Expenses.ToList();
+            return await _context.Expenses.ToListAsync();
         }
 
-        public Expense GetExpenseId(int expenseId)
+        public async Task<Expense> GetExpenseId(int expenseId)
         {
-           return _context.Expenses.FirstOrDefault(e => e.ExpenseId == expenseId);
+            return await _context.Expenses.Where(e => e.ExpenseId == expenseId).FirstOrDefaultAsync();
         }
 
-        public Expense Create(Expense expense)
+        public async Task<Expense> Create(Expense expense)
         {
             if (expense == null)
             {
@@ -31,11 +31,11 @@ namespace ExpenseManagement.Repositories
             }
 
             _context.Expenses.Add(expense);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return expense;
         }
 
-        public Expense Update(Expense expense)
+        public async Task<Expense >Update(Expense expense)
         {
             if (expense == null)
             {
@@ -43,11 +43,11 @@ namespace ExpenseManagement.Repositories
             }
 
             _context.Entry(expense).State = EntityState.Modified;
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return expense;
         }
 
-        public Expense Delete(int expenseId)
+        public async Task<Expense> Delete(int expenseId)
         {
             var expense = _context.Expenses.Find(expenseId);
 
@@ -56,7 +56,7 @@ namespace ExpenseManagement.Repositories
                 throw new ArgumentNullException(nameof(expense));
             }
             _context.Expenses.Remove(expense);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return expense;
 
         }

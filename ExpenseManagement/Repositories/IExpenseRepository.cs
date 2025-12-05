@@ -5,11 +5,11 @@ namespace ExpenseManagement.Repositories
     public interface IExpenseRepository
     {
 
-        IEnumerable<Expense> GetExpenses();
-        Expense GetExpenseId(int expenseId);
-        Expense Create(Expense expense);
-        Expense Update(Expense expense);
-        Expense Delete(int expenseId);
+        Task<IEnumerable<Expense>> GetExpenses();
+        Task<Expense> GetExpenseId(int expenseId);
+        Task<Expense> Create(Expense expense);
+        Task<Expense> Update(Expense expense);
+        Task<Expense> Delete(int expenseId);
 
     }
 }
