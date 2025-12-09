@@ -1,5 +1,6 @@
-﻿using ExpenseManagement.Models;
-using ExpenseManagement.Repositories;
+﻿using ExpenseManagement.DTOs;
+using ExpenseManagement.Models;
+using ExpenseManagement.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,81 +11,36 @@ namespace ExpenseManagement.Controllers
     public class CategoryController : ControllerBase
     {
 
-        private readonly ICategoryRepository _repository;
-        private readonly ILogger<CategoryController> _logger;
+        private readonly ICategoryService _categoryService;
+       
 
-        public CategoryController(ICategoryRepository repository, ILogger<CategoryController> logger)
+        
+
+        public CategoryController(ICategoryService categoryService )
         {
-            _repository = repository;
-            _logger = logger;
+            _categoryService = categoryService;
+
         }
 
         [HttpGet]
-        public ActionResult<IEnumerable<Category>> Get()
+        public async Task<ActionResult<IEnumerable<CategoryDTO>>> GetCategories()
         {
-
-            var categories = _repository.GetCategories();
-            return Ok(categories);
-
+            var categoriesDTO = await _categoryService.GetCategories();
+            if (categoriesDTO == null)
+            {
+                return NotFound();
+            }
+            return Ok(categoriesDTO);
         }
 
-        [HttpGet("{id:int}", Name = "ObterCategoria")]
-        public ActionResult<Category> GetById(int id)
+        [HttpGet]
+        public async Task<ActionResult<CategoryDTO>> GetCategorieById(int id) 
         {
-            var category = _repository.GetCategoryById(id);
-            if (category == null)
-            {
-                _logger.LogWarning("Category with id {CategoryId} not found.", id);
-                return NotFound($"Categoria com id {id} não encontrada...");
-            }
-            return Ok(category);
+            var categoriesDTO = await _categoryService.GetCategoryById(id);
 
+            return
         }
 
-        [HttpPost]
-        public ActionResult<Category> Post([FromBody] Category category)
-        {
-            if (category == null)
-            {
-                _logger.LogWarning("Received null category object in POST request.");
-                return BadRequest("Categoria inválida.");
-            }
 
-            var categoriaCriada = _repository.Create(category);
-
-            return new CreatedAtRouteResult("ObterCategoria", new { id = categoriaCriada.CategoryId }, categoriaCriada);
-        }
-
-        [HttpPut("{id:int}")]
-        public ActionResult Put(int id, Category category)
-        {
-            if (category == null || category.CategoryId != id)
-            {
-                _logger.LogWarning("Category ID mismatch or null object in PUT request.");
-                return BadRequest("Categoria inválida.");
-            }
-            var categoriaExistente = _repository.GetCategoryById(id);
-            if (categoriaExistente == null)
-            {
-                _logger.LogWarning("Category with id {CategoryId} not found for update.", id);
-                return NotFound($"Categoria com id {id} não encontrada...");
-            }
-            _repository.Update(category);
-            return Ok(category);
-        }
-
-        [HttpDelete("{id:int}")]
-        public ActionResult Delete(int id) { 
-            var categoria = _repository.GetCategoryById(id);
-
-            if (categoria == null)
-            {
-                _logger.LogWarning("Category with id {CategoryId} not found for deletion.", id);
-                return NotFound($"Categoria com id {id} não encontrada...");
-            }
-
-            var categoriaExcluida = _repository.Delete(id);
-            return Ok(categoriaExcluida);
-        }
     }
 }
