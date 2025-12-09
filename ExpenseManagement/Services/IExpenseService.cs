@@ -4,11 +4,11 @@ namespace ExpenseManagement.Services
 {
     public interface IExpenseService
     {
-        Task<IEnumerable<ExpenseDTO>> GetAllProductsAsync();
-        Task GetProductByIdAsync(int id);
-        Task CreateProductAsync(ExpenseDTO productDto);
-        Task UpdateProductAsync(int id, ExpenseDTO productDto);
-        Task DeleteProductAsync(int id);
+        Task<IEnumerable<ExpenseDTO>> GetAllExpensesAsync();
+        Task<ExpenseDTO> GetExpensesByIdAsync(int id);
+        Task CreateExpensesAsync(ExpenseDTO productDto);
+        Task UpdateExpenseAsync(ExpenseDTO productDto);
+        Task DeleteExpenseAsync(int id);
 
     }
 }
