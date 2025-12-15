@@ -1,8 +1,11 @@
-﻿using ExpenseManagement.Models;
+﻿using ExpenseManagement.DTOs;
+using ExpenseManagement.Models;
 using ExpenseManagement.Repositories;
+using ExpenseManagement.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
 
 namespace ExpenseManagement.Controllers
 {
@@ -11,12 +14,12 @@ namespace ExpenseManagement.Controllers
     public class ExpenseController : ControllerBase
     {
 
-        private readonly IExpenseRepository _repository;
-        private readonly ILogger<ExpenseController> _logger;
-        public ExpenseController(IExpenseRepository repository, ILogger<ExpenseController> logger)
+        private readonly IExpenseService _service;
+        
+        public ExpenseController(IExpenseService service)
         {
-            _repository = repository;
-            _logger = logger;
+            _service = service;
+            
         }
 
 
@@ -24,7 +27,11 @@ namespace ExpenseManagement.Controllers
         public ActionResult<IEnumerable<Expense>> Get()
         {
 
-            var expenses = _repository.GetExpenses();
+            var expenses = _service.GetAllExpensesAsync();
+            if (expenses == null)
+            {
+                return NotFound("Nenhuma despesa encontrada...");
+            }
             return Ok(expenses);
 
         }
@@ -32,60 +39,56 @@ namespace ExpenseManagement.Controllers
         [HttpGet("{id:int}", Name = "ObterExpense")]
         public ActionResult<Category> GetById(int id)
         {
-            var category = _repository.GetExpenseId(id);
+            var category = _service.GetExpensesByIdAsync(id);
             if (category == null)
             {
-                _logger.LogWarning("Expense with id {ExpenseId} not found.", id);
-                return NotFound($"Dívida com id {id} não encontrada...");
+                 return NotFound($"Dívida com id {id} não encontrada...");
             }
             return Ok(category);
 
         }
 
         [HttpPost]
-        public ActionResult<Category> Post([FromBody] Expense expense)
+
+        public async Task<ActionResult<Category>> Post([FromBody] ExpenseDTO expenseDTO)
         {
-            if (expense == null)
+            if (expenseDTO == null)
             {
-                _logger.LogWarning("Received null expense object in POST request.");
-                return BadRequest("expense inválida.");
+               return BadRequest("expense inválida.");
             }
 
-            var expenseCriada = _repository.Create(expense);
+            await _service.CreateExpensesAsync(expenseDTO);
 
-            return new CreatedAtRouteResult("ObterCategoria", new { id = expenseCriada.ExpenseId }, expenseCriada);
+            return new CreatedAtRouteResult("ObterCategoria", new { id = expenseDTO.ExpenseId }, expenseDTO);
         }
 
         [HttpPut("{id:int}")]
-        public ActionResult Put(int id, Expense expense)
+        public ActionResult Put(int id, ExpenseDTO expenseDTO)
         {
-            if (expense == null || expense.ExpenseId != id)
+            if (expenseDTO == null || expenseDTO.ExpenseId != id)
             {
-                _logger.LogWarning("Expense ID mismatch or null object in PUT request.");
-                return BadRequest("Expense inválida.");
+               return BadRequest("Expense inválida.");
             }
-            var expenseExistente = _repository.GetExpenseId(id);
+            var expenseExistente = _service.GetExpensesByIdAsync(id);
             if (expenseExistente == null)
-            {
-                _logger.LogWarning("Expense with id {ExpenseId} not found for update.", id);
+            {               
                 return NotFound($"Expense com id {id} não encontrada...");
             }
-            _repository.Update(expense);
-            return Ok(expense);
+            _service.UpdateExpenseAsync(expenseDTO);
+            return Ok(expenseDTO);
         }
 
         [HttpDelete("{id:int}")]
         public ActionResult Delete(int id)
         {
-            var expense = _repository.GetExpenseId(id);
+            var expense = _service.GetExpensesByIdAsync(id);
 
             if (expense == null)
             {
-                _logger.LogWarning("Expense with id {ExpenseId} not found for deletion.", id);
                 return NotFound($"Expense com id {id} não encontrada...");
             }
 
-            var expenseExcluida = _repository.Delete(id);
+            var expenseExcluida = _service.DeleteExpenseAsync(id);
             return Ok(expenseExcluida);
         }
     }
