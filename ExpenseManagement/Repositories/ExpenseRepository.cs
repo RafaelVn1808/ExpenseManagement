@@ -15,12 +15,12 @@ namespace ExpenseManagement.Repositories
 
         public async Task<IEnumerable<Expense>> GetExpenses()
         {
-            return await _context.Expenses.ToListAsync();
+            return await _context.Expenses.Include(c=> c.Category).ToListAsync();
         }
 
         public async Task<Expense> GetExpenseId(int expenseId)
         {
-            return await _context.Expenses.Where(e => e.ExpenseId == expenseId).FirstOrDefaultAsync();
+            return await _context.Expenses.Include(c => c.Category).Where(e => e.ExpenseId == expenseId).FirstOrDefaultAsync();
         }
 
         public async Task<Expense> Create(Expense expense)

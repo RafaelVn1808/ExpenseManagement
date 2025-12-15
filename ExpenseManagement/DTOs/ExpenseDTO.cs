@@ -22,6 +22,7 @@ namespace ExpenseManagement.DTOs
         public required string Status { get; set; }
         public string? NoteImageUrl { get; set; }
         public string? ProofImageUrl { get; set; }
+        public string? CategoryName { get; set; }
         public int CategoryId { get; set; }
         public Category? Category { get; set; }
     }
