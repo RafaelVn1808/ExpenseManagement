@@ -6,8 +6,8 @@ namespace ExpenseManagement.Services
     {
         Task<IEnumerable<ExpenseDTO>> GetAllExpensesAsync();
         Task<ExpenseDTO> GetExpensesByIdAsync(int id);
-        Task CreateExpensesAsync(ExpenseDTO productDto);
-        Task UpdateExpenseAsync(ExpenseDTO productDto);
+        Task CreateExpensesAsync(ExpenseDTO expenseDTO);
+        Task UpdateExpenseAsync(ExpenseDTO expenseDTO);
         Task DeleteExpenseAsync(int id);
 
     }
