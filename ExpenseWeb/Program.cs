@@ -1,7 +1,17 @@
+using ExpenseWeb.Services;
+using ExpenseWeb.Services.Contracts;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddHttpClient("ExpenseApi", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ServiceUri:ExpenseApi"]);
+});
+
+builder.Services.AddScoped<IExpenseService, ExpenseService>();
 
 var app = builder.Build();
 
