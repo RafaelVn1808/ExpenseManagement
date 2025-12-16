@@ -24,7 +24,7 @@ namespace ExpenseWeb.Services
 
         public async Task<IEnumerable<ExpenseViewModel>> GetAllExpenses()
         {
-            var client = _clientFactory.CreateClient("ExpenseAPI");
+            var client = _clientFactory.CreateClient("ExpenseApi");
 
             using (var response = await client.GetAsync(apiEndpoint)) {
                 if (response.IsSuccessStatusCode)
