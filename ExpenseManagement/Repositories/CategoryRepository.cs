@@ -52,7 +52,7 @@ namespace ExpenseManagement.Repositories
         {
             var category = await _context.Categories.FindAsync(categoryId);
 
-            if (category != null)
+            if (category == null)
             {throw new ArgumentNullException(nameof(category));
 
             }
