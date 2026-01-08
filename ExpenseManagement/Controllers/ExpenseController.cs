@@ -24,10 +24,10 @@ namespace ExpenseManagement.Controllers
 
 
         [HttpGet]
-        public ActionResult<IEnumerable<Expense>> Get()
+        public async Task <ActionResult<IEnumerable<Expense>>> Get()
         {
 
-            var expenses = _service.GetAllExpensesAsync();
+            var expenses = await _service.GetAllExpensesAsync();
             if (expenses == null)
             {
                 return NotFound("Nenhuma despesa encontrada...");
@@ -37,9 +37,9 @@ namespace ExpenseManagement.Controllers
         }
 
         [HttpGet("{id:int}", Name = "ObterExpense")]
-        public ActionResult<Category> GetById(int id)
+        public async Task<ActionResult<Category>> GetById(int id)
         {
-            var category = _service.GetExpensesByIdAsync(id);
+            var category = await _service.GetExpensesByIdAsync(id);
             if (category == null)
             {
                  return NotFound($"Dívida com id {id} não encontrada...");
@@ -59,11 +59,11 @@ namespace ExpenseManagement.Controllers
 
             await _service.CreateExpensesAsync(expenseDTO);
 
-            return new CreatedAtRouteResult("ObterCategoria", new { id = expenseDTO.ExpenseId }, expenseDTO);
+            return new CreatedAtRouteResult("ObterExpense", new { id = expenseDTO.ExpenseId }, expenseDTO);
         }
 
         [HttpPut("{id:int}")]
-        public ActionResult Put(int id, ExpenseDTO expenseDTO)
+        public async Task<ActionResult> Put(int id, ExpenseDTO expenseDTO)
         {
             if (expenseDTO == null || expenseDTO.ExpenseId != id)
             {
@@ -74,23 +74,23 @@ namespace ExpenseManagement.Controllers
             {               
                 return NotFound($"Expense com id {id} não encontrada...");
             }
-            _service.UpdateExpenseAsync(expenseDTO);
+            await _service.UpdateExpenseAsync(expenseDTO);
             return Ok(expenseDTO);
         }
 
         [HttpDelete("{id:int}")]
-        public ActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var expense = _service.GetExpensesByIdAsync(id);
+            var expense = await _service.GetExpensesByIdAsync(id);
 
             if (expense == null)
-            {
                 return NotFound($"Expense com id {id} não encontrada...");
-            }
 
-            var expenseExcluida = _service.DeleteExpenseAsync(id);
-            return Ok(expenseExcluida);
+            await _service.DeleteExpenseAsync(id);
+
+            return NoContent(); // 204
         }
+
     }
 
 }

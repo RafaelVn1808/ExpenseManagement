@@ -24,6 +24,7 @@ namespace ExpenseManagement.DTOs
         public string? ProofImageUrl { get; set; }
         public string? CategoryName { get; set; }
         public int CategoryId { get; set; }
+        [JsonIgnore]
         public Category? Category { get; set; }
     }
 }
