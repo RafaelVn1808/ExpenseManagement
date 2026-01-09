@@ -42,10 +42,15 @@ namespace ExpenseManagement.Services
             await _expenseRepository.Update(categoryEntity);
         }
 
-        public async Task DeleteExpenseAsync(int id)
+        public async Task<ExpenseDTO?> DeleteExpenseAsync(int id)
         {
-            var expenseEntity = _expenseRepository.GetExpenseId(id).Result;
-            await _expenseRepository.Delete(expenseEntity.ExpenseId);
+            var expense = await _expenseRepository.Delete(id);
+
+            if (expense == null)
+                return null;
+
+            return _mapper.Map<ExpenseDTO>(expense);
         }
+
     }
 }
