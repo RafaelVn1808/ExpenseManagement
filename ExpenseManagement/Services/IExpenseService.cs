@@ -8,7 +8,7 @@ namespace ExpenseManagement.Services
         Task<ExpenseDTO> GetExpensesByIdAsync(int id);
         Task CreateExpensesAsync(ExpenseDTO expenseDTO);
         Task UpdateExpenseAsync(ExpenseDTO expenseDTO);
-        Task DeleteExpenseAsync(int id);
+        Task<ExpenseDTO?> DeleteExpenseAsync(int id);
 
     }
 }

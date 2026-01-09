@@ -47,18 +47,19 @@ namespace ExpenseManagement.Repositories
             return expense;
         }
 
-        public async Task<Expense> Delete(int expenseId)
+        public async Task<Expense?> Delete(int expenseId)
         {
-            var expense = _context.Expenses.Find(expenseId);
+            var expense = await _context.Expenses
+                .FirstOrDefaultAsync(e => e.ExpenseId == expenseId);
 
-            if (expense != null)
-            {
-                throw new ArgumentNullException(nameof(expense));
-            }
+            if (expense == null)
+                return null;
+
             _context.Expenses.Remove(expense);
             await _context.SaveChangesAsync();
-            return expense;
 
+            return expense;
         }
+
     }
 }
