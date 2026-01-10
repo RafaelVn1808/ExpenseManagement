@@ -42,7 +42,7 @@ namespace ExpenseWeb.Services
 
         public async Task<ExpenseViewModel> GetExpenseById(int id)
         {
-            var client = _clientFactory.CreateClient("ExpenseAPI");
+            var client = _clientFactory.CreateClient("ExpenseApi");
 
             using (var response = await client.GetAsync(apiEndpoint + id))
             {
@@ -61,7 +61,7 @@ namespace ExpenseWeb.Services
 
         public async Task<ExpenseViewModel> CreateExpense(ExpenseViewModel expenseVM)
         {
-            var client = _clientFactory.CreateClient("ExpenseAPI");
+            var client = _clientFactory.CreateClient("ExpenseApi");
 
             StringContent content = new StringContent(JsonSerializer.Serialize(expenseVM), Encoding.UTF8, "application/json");
 
@@ -82,7 +82,7 @@ namespace ExpenseWeb.Services
 
         public async Task<ExpenseViewModel> UpdateExpense(ExpenseViewModel expenseVM)
         {
-            var client = _clientFactory.CreateClient("ExpenseAPI");
+            var client = _clientFactory.CreateClient("ExpenseApi");
 
             ExpenseViewModel expenseUpdated = new ExpenseViewModel();
 
@@ -104,7 +104,7 @@ namespace ExpenseWeb.Services
 
         public async Task<bool> DeleteExpense(int id)
         {
-            var client = _clientFactory.CreateClient("ExpenseAPI");
+            var client = _clientFactory.CreateClient("ExpenseApi");
 
             using (var response = await  client.DeleteAsync(apiEndpoint + id))
             {

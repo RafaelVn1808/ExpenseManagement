@@ -1,27 +1,84 @@
 ﻿using ExpenseWeb.Models;
 using ExpenseWeb.Services.Contracts;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace ExpenseWeb.Controllers
 {
     public class ExpenseController : Controller
     {
         private readonly IExpenseService _expenseService;
+        private readonly ICategoryService _categoryService;
 
-        public ExpenseController(IExpenseService expenseService)
+        public ExpenseController(
+            IExpenseService expenseService,
+            ICategoryService categoryService)
         {
             _expenseService = expenseService;
+            _categoryService = categoryService;
         }
 
-        public async Task<ActionResult<IEnumerable<ExpenseViewModel>>> Index()
+        // INDEX COM FILTRO DE MÊS / ANO
+        [HttpGet]
+        public async Task<IActionResult> Index(int? month, int? year)
         {
-            var result = await _expenseService.GetAllExpenses();
+            int referenceMonth = month ?? DateTime.Now.Month;
+            int referenceYear = year ?? DateTime.Now.Year;
 
-            if (result is null) { 
+            var expenses = await _expenseService.GetAllExpenses();
+
+            if (expenses is null)
                 return View("Error");
+
+            
+            var filteredExpenses = expenses
+                .Where(e =>
+                    e.ReferenceMonth == referenceMonth &&
+                    e.ReferenceYear == referenceYear)
+                .ToList();
+
+            ViewBag.SelectedMonth = referenceMonth;
+            ViewBag.SelectedYear = referenceYear;
+
+            return View(filteredExpenses);
+        }
+
+        // 🔽 CREATE (GET)
+        [HttpGet]
+        public async Task<IActionResult> CreateExpense()
+        {
+            ViewBag.CategoryId =
+                new SelectList(
+                    await _categoryService.GetAllCategories(),
+                    "CategoryId",
+                    "Name");
+
+            return View();
+        }
+
+        // 🔽 CREATE (POST)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateExpense(ExpenseViewModel expense)
+        {
+            if (!ModelState.IsValid)
+            {
+                ViewBag.CategoryId =
+                    new SelectList(
+                        await _categoryService.GetAllCategories(),
+                        "CategoryId",
+                        "Name");
+
+                return View(expense);
             }
 
-            return View(result);
+            var result = await _expenseService.CreateExpense(expense);
+
+            if (result is null)
+                return View("Error");
+
+            return RedirectToAction(nameof(Index));
         }
     }
 }
+

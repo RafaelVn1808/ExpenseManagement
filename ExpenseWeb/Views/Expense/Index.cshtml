@@ -2,167 +2,129 @@
 
 @{
     ViewData["Title"] = "Despesas";
+
+    int selectedMonth = ViewBag.SelectedMonth ?? DateTime.Now.Month;
+    int selectedYear = ViewBag.SelectedYear ?? DateTime.Now.Year;
 }
 
-<style>
-    .bi {
-        font-size: 1rem;
-    }
+<h2 class="mb-4">Despesas</h2>
 
-    .btn-group .btn {
-        padding: 0.25rem 0.5rem;
-    }
+<!-- Filtro por Mês / Ano -->
+<form method="get"
+      asp-action="Index"
+      class="row g-3 align-items-end mb-4">
 
-    .table th {
-        font-weight: 600;
-        white-space: nowrap;
-    }
-
-    .table td {
-        vertical-align: middle;
-    }
-
-    .badge {
-        font-size: 0.85em;
-        font-weight: 500;
-    }
-</style>
-
-<div class="container">
-    <div class="row mb-4">
-        <div class="col">
-            <h1>Despesas</h1>
-        </div>
-        <div class="col text-end">
-            <a href="@Url.Action("Create", "Expense")" class="btn btn-primary">
-                <i class="bi bi-plus-circle"></i> Nova dívida
-            </a>
-        </div>
+    <div class="col-md-3">
+        <label class="form-label">Mês</label>
+        <select name="month" class="form-select">
+            @for (int m = 1; m <= 12; m++)
+            {
+                <option value="@m" selected="@(m == selectedMonth)">
+                    @System.Globalization.CultureInfo.CurrentCulture
+                    .DateTimeFormat
+                    .GetMonthName(m)
+                </option>
+            }
+        </select>
     </div>
 
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead class="table-dark">
+    <div class="col-md-3">
+        <label class="form-label">Ano</label>
+        <select name="year" class="form-select">
+            @for (int y = DateTime.Now.Year - 5; y <= DateTime.Now.Year + 1; y++)
+            {
+                <option value="@y" selected="@(y == selectedYear)">
+                    @y
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-funnel"></i> Filtrar
+        </button>
+    </div>
+
+    <div class="col-md-3 text-end">
+        <a asp-action="CreateExpense" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Nova Despesa
+        </a>
+    </div>
+</form>
+
+<!-- Tabela -->
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Data</th>
+                <th>Nome</th>
+                <th>Valor</th>
+                <th>Parcela</th>
+                <th>Status</th>
+                <th>Categoria</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Any())
+            {
                 <tr>
-                    <th>Data</th>
-                    <th>Nome</th>
-                    <th>Valor</th>
-                    <th>Validade</th>
-                    <th>Parcelas</th>
-                    <th>Status</th>
-                    <th>Nota Fiscal</th>
-                    <th>Comprovante de Pagamento</th>
-                    <th>Categoria</th>
-                    <th>Ações</th>
+                    <td colspan="7" class="text-center text-muted">
+                        Nenhuma despesa encontrada para este período
+                    </td>
                 </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in Model)
+            }
+            else
+            {
+                foreach (var item in Model)
                 {
                     <tr>
                         <td>@item.Date.ToString("dd/MM/yyyy")</td>
                         <td>@item.Name</td>
                         <td>@item.Amount.ToString("C")</td>
-                        <td>@item.Validity.ToString("dd/MM/yyyy")</td>
-                        <td>@item.Installments</td>
+                        <td>
+                            <span class="badge bg-info">
+                                @item.InstallmentLabel
+                            </span>
+                        </td>
                         <td>
                             <span class="badge @GetStatusBadgeClass(item.Status)">
                                 @item.Status
                             </span>
                         </td>
                         <td>
-                            @if (!string.IsNullOrEmpty(item.NoteImageUrl))
-                            {
-                                <a href="@item.NoteImageUrl" target="_blank" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-receipt"></i>
-                                </a>
-                            }
-                            else
-                            {
-                                <span class="text-muted">N/A</span>
-                            }
-                        </td>
-                        <td>
-                            @if (!string.IsNullOrEmpty(item.ProofImageUrl))
-                            {
-                                <a href="@item.ProofImageUrl" target="_blank" class="btn btn-sm btn-outline-success">
-                                    <i class="bi bi-file-check"></i>
-                                </a>
-                            }
-                            else
-                            {
-                                <span class="text-muted">N/A</span>
-                            }
-                        </td>
-                        <td>
-                            <span class="badge bg-secondary">@item.CategoryName</span>
+                            <span class="badge bg-secondary">
+                                @item.CategoryName
+                            </span>
                         </td>
                         <td>
                             <div class="btn-group" role="group">
-                                <a href="@Url.Action("Edit", "Expense", new { id = item.ExpenseId })"
-                                   class="btn btn-sm btn-outline-warning">
+                                <a asp-action="CreateExpense"
+                                   asp-route-id="@item.ExpenseId"
+                                   class="btn btn-sm btn-outline-warning"
+                                   title="Editar">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <button type="button"
-                                        class="btn btn-sm btn-outline-danger"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#deleteModal"
-                                        data-id="@item.ExpenseId"
-                                        data-name="@item.Name">
+
+                                <a asp-action="Delete"
+                                   asp-route-id="@item.ExpenseId"
+                                   class="btn btn-sm btn-outline-danger"
+                                   title="Excluir">
                                     <i class="bi bi-trash"></i>
-                                </button>
+                                </a>
                             </div>
                         </td>
                     </tr>
                 }
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- Modal de Confirmação de Exclusão -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Confirmar Exclusão</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>Tem certeza que deseja excluir a despesa <strong id="expenseName"></strong>?</p>
-                <p class="text-danger">Esta ação não pode ser desfeita.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <form id="deleteForm" method="post" action="@Url.Action("Delete", "Expense")">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="id" id="expenseId" />
-                    <button type="submit" class="btn btn-danger">Excluir</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-@section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var deleteModal = document.getElementById('deleteModal');
-            if (deleteModal) {
-                deleteModal.addEventListener('show.bs.modal', function (event) {
-                    var button = event.relatedTarget;
-                    var expenseId = button.getAttribute('data-id');
-                    var expenseName = button.getAttribute('data-name');
-
-                    document.getElementById('expenseName').textContent = expenseName;
-                    document.getElementById('expenseId').value = expenseId;
-                });
             }
-        });
-    </script>
-}
+        </tbody>
+    </table>
+</div>
 
-@functions {
+@functions
+{
     private string GetStatusBadgeClass(string status)
     {
         return status switch
@@ -175,3 +137,5 @@
         };
     }
 }
+
+
