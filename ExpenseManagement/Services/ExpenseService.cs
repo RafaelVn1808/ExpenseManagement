@@ -31,9 +31,16 @@ namespace ExpenseManagement.Services
 
         public async Task CreateExpensesAsync(ExpenseDTO expenseDto)
         {
+            // Regra de negócio
+            if (expenseDto.Installments <= 0)
+                expenseDto.Installments = 1;
+
+            expenseDto.InstallmentAmount =
+                Math.Round(expenseDto.TotalAmount / expenseDto.Installments, 2);
+
             var expenseEntity = _mapper.Map<Expense>(expenseDto);
+
             await _expenseRepository.Create(expenseEntity);
-            expenseDto.Category = expenseEntity.Category;
         }
 
         public async Task UpdateExpenseAsync(ExpenseDTO expenseDto)

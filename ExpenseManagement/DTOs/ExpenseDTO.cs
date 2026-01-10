@@ -7,24 +7,38 @@ namespace ExpenseManagement.DTOs
 {
     public class ExpenseDTO
     {
-
         public int ExpenseId { get; set; }
-        [Required(ErrorMessage = "Date is required")]
-        public DateTime Date { get; set; }
+
+        // Data da PRIMEIRA parcela
+        [Required(ErrorMessage = "Start date is required")]
+        public DateTime StartDate { get; set; }
+
         [Required(ErrorMessage = "Name is required")]
         [MinLength(3)]
         [MaxLength(100)]
-        public required string Name { get; set; }
-        [Required(ErrorMessage = "Amount is required")]
-        public required decimal Amount { get; set; }
-        public DateTime Validity { get; set; }
+        public string? Name { get; set; }
+
+        // Valor TOTAL da despesa
+        [Required(ErrorMessage = "Total amount is required")]
+        public decimal TotalAmount { get; set; }
+
+        // Quantidade total de parcelas
+        [Range(1, 120)]
         public int Installments { get; set; }
-        public required string Status { get; set; }
+
+        // Valor de cada parcela (calculado no service)
+        public decimal InstallmentAmount { get; set; }
+
+        public DateTime? Validity { get; set; }
+
+        [Required]
+        public string? Status { get; set; }
+
         public string? NoteImageUrl { get; set; }
         public string? ProofImageUrl { get; set; }
-        public string? CategoryName { get; set; }
+
         public int CategoryId { get; set; }
-        [JsonIgnore]
-        public Category? Category { get; set; }
+        public string? CategoryName { get; set; }
     }
+
 }

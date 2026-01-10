@@ -4,36 +4,46 @@ using System.Text.Json.Serialization;
 
 namespace ExpenseManagement.Models
 {
-    public class Expense{
-
+    public class Expense
+    {
         [Key]
         public int ExpenseId { get; set; }
-        [Required]
-        public DateTime Date { get; set; }
-        [Required]
-        public required string Name { get; set; }
-        [Required]
-        [Column(TypeName ="decimal(10,2)")]
-        public required decimal Amount { get; set; }
-        public DateTime Validity { get; set; }
-        
-        public int Installments { get; set; }
-        [Required]
 
+        // Data da PRIMEIRA parcela
+        [Required]
+        public DateTime StartDate { get; set; }
+
+        [Required]
+        public string? Name { get; set; }
+
+        // Valor TOTAL da despesa
+        [Required]
+        [Column(TypeName = "decimal(10,2)")]
+        public decimal TotalAmount { get; set; }
+
+        // Quantidade de parcelas
+        public int Installments { get; set; }
+
+        // Valor de CADA parcela
+        [Column(TypeName = "decimal(10,2)")]
+        public decimal InstallmentAmount { get; set; }
+
+        public DateTime? Validity { get; set; }
+
+        [Required]
         [StringLength(20)]
-        public required string Status { get; set; }
+        public string? Status { get; set; }
+
         [StringLength(300)]
         public string? NoteImageUrl { get; set; }
+
         [StringLength(300)]
         public string? ProofImageUrl { get; set; }
 
         public int CategoryId { get; set; }
+
         [JsonIgnore]
         public Category? Category { get; set; }
-
-
-
-
-
     }
+
 }
