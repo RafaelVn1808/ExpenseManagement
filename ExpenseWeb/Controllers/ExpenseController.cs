@@ -30,7 +30,7 @@ namespace ExpenseWeb.Controllers
             if (expenses is null)
                 return View("Error");
 
-            
+
             var filteredExpenses = expenses
                 .Where(e =>
                     e.ReferenceMonth == referenceMonth &&
@@ -78,6 +78,71 @@ namespace ExpenseWeb.Controllers
                 return View("Error");
 
             return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> UpdateExpense(int id)
+        {
+            var expense = await _expenseService.GetExpenseById(id);
+
+            if (expense is null)
+                return NotFound();
+
+            ViewBag.CategoryId =
+                new SelectList(
+                    await _categoryService.GetAllCategories(),
+                    "CategoryId",
+                    "Name",
+                    expense.CategoryId);
+
+            return View(expense);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateExpense(ExpenseViewModel expense)
+        {
+            if (!ModelState.IsValid)
+            {
+                ViewBag.CategoryId =
+                    new SelectList(
+                        await _categoryService.GetAllCategories(),
+                        "CategoryId",
+                        "Name",
+                        expense.CategoryId);
+
+                return View(expense);
+            }
+
+            var updatedExpense = await _expenseService.UpdateExpense(expense);
+
+            if (updatedExpense is null)
+                return View("Error");
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DeleteExpense(int id)
+        {
+            var expense = await _expenseService.GetExpenseById(id);
+
+            if (expense is null)
+                return NotFound();
+
+            return View(expense);
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteExpenseConfirmed(int expenseId)
+        {
+            var result = await _expenseService.DeleteExpense(expenseId);
+
+            if (!result)
+                return View("Error");
+
+            return RedirectToAction(nameof(Index));
+
         }
     }
 }
