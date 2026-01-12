@@ -1,11 +1,13 @@
 ﻿using ExpenseManagement.DTOs;
 using ExpenseManagement.Models;
 using ExpenseManagement.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExpenseManagement.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class CategoryController : ControllerBase
