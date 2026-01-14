@@ -1,4 +1,5 @@
-﻿using ExpenseManagement.DTOs;
+﻿using ExpenseApi.Identity;
+using ExpenseManagement.DTOs;
 using ExpenseManagement.Models;
 using ExpenseManagement.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -7,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ExpenseManagement.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = Roles.Admin)]
     [Route("api/[controller]")]
     [ApiController]
     public class CategoryController : ControllerBase

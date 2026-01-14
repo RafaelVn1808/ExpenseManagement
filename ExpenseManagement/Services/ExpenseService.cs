@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using ExpenseApi.ErrorResponse;
 using ExpenseManagement.DTOs;
 using ExpenseManagement.Models;
 using ExpenseManagement.Repositories;
@@ -24,14 +25,19 @@ namespace ExpenseManagement.Services
 
         public async Task<ExpenseDTO> GetExpensesByIdAsync(int id)
         {
-            var expensesEntity = await _expenseRepository.GetExpenseId(id);
-            return _mapper.Map<ExpenseDTO>(expensesEntity);
-            
+            var expenseEntity = await _expenseRepository.GetExpenseId(id);
+
+            if (expenseEntity == null)
+                throw new KeyNotFoundException("Despesa não encontrada");
+
+            return _mapper.Map<ExpenseDTO>(expenseEntity);
         }
 
         public async Task CreateExpensesAsync(ExpenseDTO expenseDto)
         {
-            // Regra de negócio
+            if (expenseDto.TotalAmount <= 0)
+                throw new BusinessException("O valor total deve ser maior que zero");
+
             if (expenseDto.Installments <= 0)
                 expenseDto.Installments = 1;
 
@@ -45,19 +51,23 @@ namespace ExpenseManagement.Services
 
         public async Task UpdateExpenseAsync(ExpenseDTO expenseDto)
         {
-            var categoryEntity = _mapper.Map<Expense>(expenseDto);
-            await _expenseRepository.Update(categoryEntity);
+            var existing = await _expenseRepository.GetExpenseId(expenseDto.ExpenseId);
+
+            if (existing == null)
+                throw new KeyNotFoundException("Despesa não encontrada");
+
+            var expenseEntity = _mapper.Map<Expense>(expenseDto);
+            await _expenseRepository.Update(expenseEntity);
         }
 
-        public async Task<ExpenseDTO?> DeleteExpenseAsync(int id)
+        public async Task<ExpenseDTO> DeleteExpenseAsync(int id)
         {
             var expense = await _expenseRepository.Delete(id);
 
             if (expense == null)
-                return null;
+                throw new KeyNotFoundException("Despesa não encontrada");
 
             return _mapper.Map<ExpenseDTO>(expense);
         }
-
     }
 }
