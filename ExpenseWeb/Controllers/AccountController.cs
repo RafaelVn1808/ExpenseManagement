@@ -20,14 +20,15 @@ namespace ExpenseWeb.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (!ModelState.IsValid)
                 return View(model);
 
-            var token = await _authService.Login(model);
+            var token = await _authService.LoginAsync(model.Email, model.Password);
 
-            if (token == null)
+            if (string.IsNullOrEmpty(token))
             {
                 ModelState.AddModelError("", "Login inválido");
                 return View(model);
@@ -41,7 +42,7 @@ namespace ExpenseWeb.Controllers
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
-            return RedirectToAction("Login");
+            return RedirectToAction(nameof(Login));
         }
     }
 }

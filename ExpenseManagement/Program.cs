@@ -1,6 +1,7 @@
 using AutoMapper;
 using ExpenseApi.Context;
 using ExpenseApi.Identity;
+using ExpenseApi.Middlewares;
 using ExpenseManagement.Context;
 using ExpenseManagement.Repositories;
 using ExpenseManagement.Services;
@@ -25,9 +26,11 @@ builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IExpenseService, ExpenseService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("AuthConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -61,7 +64,8 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+        RoleClaimType = "role"
     };
 });
 
@@ -70,6 +74,7 @@ builder.Services.AddAuthentication(options =>
 
 var app = builder.Build();
 
+app.UseMiddleware<ExceptionMiddleware>();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -93,4 +98,4 @@ using (var scope = app.Services.CreateScope())
 }
 
 
-app.RunAsync();
+app.Run();
