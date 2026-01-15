@@ -42,9 +42,11 @@ namespace ExpenseManagement.Services
 
         public async Task RemoveCategory(int categoryId)
         {
-            var categoryEntity = _categoryRepository.GetCategoryById(categoryId).Result;
-            await _categoryRepository.Delete(categoryEntity.CategoryId);
-
+            var categoryEntity = await _categoryRepository.GetCategoryById(categoryId);
+            if (categoryEntity != null)
+            {
+                await _categoryRepository.Delete(categoryEntity.CategoryId);
+            }
         }
 
        

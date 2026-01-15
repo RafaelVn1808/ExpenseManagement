@@ -45,8 +45,14 @@ namespace ExpenseManagement.Services
 
         public async Task UpdateExpenseAsync(ExpenseDTO expenseDto)
         {
-            var categoryEntity = _mapper.Map<Expense>(expenseDto);
-            await _expenseRepository.Update(categoryEntity);
+            if (expenseDto.Installments <= 0)
+                expenseDto.Installments = 1;
+
+            expenseDto.InstallmentAmount =
+                Math.Round(expenseDto.TotalAmount / expenseDto.Installments, 2);
+
+            var expenseEntity = _mapper.Map<Expense>(expenseDto);
+            await _expenseRepository.Update(expenseEntity);
         }
 
         public async Task<ExpenseDTO?> DeleteExpenseAsync(int id)
