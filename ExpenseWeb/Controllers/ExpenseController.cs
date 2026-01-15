@@ -1,10 +1,12 @@
 ﻿using ExpenseWeb.Models;
 using ExpenseWeb.Services.Contracts;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace ExpenseWeb.Controllers
 {
+    [Authorize]
     public class ExpenseController : Controller
     {
         private readonly IExpenseService _expenseService;
