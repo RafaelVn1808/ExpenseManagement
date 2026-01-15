@@ -48,5 +48,8 @@ namespace ExpenseManagement.DTOs
 
         // Apenas leitura (retorno da API)
         public string? CategoryName { get; set; }
+
+        // UserId - preenchido automaticamente pelo controller (não deve ser enviado pelo cliente)
+        public string? UserId { get; set; }
     }
 }

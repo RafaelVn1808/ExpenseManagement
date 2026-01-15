@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using ExpenseManagement.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace ExpenseManagement.DTOs
 {
