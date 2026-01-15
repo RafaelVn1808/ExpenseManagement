@@ -32,17 +32,49 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
+        // Requisitos de senha mais fortes
         options.Password.RequireDigit = true;
-        options.Password.RequiredLength = 6;
-        options.Password.RequireUppercase = false;
-        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequiredLength = 8;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireLowercase = true;
+        options.Password.RequireNonAlphanumeric = true;
+        options.Password.RequiredUniqueChars = 1;
+
+        // Configurações de lockout para proteção contra brute force
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.AllowedForNewUsers = true;
+
+        // Configurações de usuário
+        options.User.RequireUniqueEmail = true;
+        options.SignIn.RequireConfirmedEmail = false; // Pode ser habilitado em produção
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
 builder.Services.AddControllers().AddJsonOptions(options=>options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+
+// CORS Configuration
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowExpenseWeb", policy =>
+    {
+        policy.WithOrigins(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? new[] { "https://localhost:7000" })
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+});
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+// Validação da chave JWT
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrEmpty(jwtKey) || jwtKey.Length < 32)
+{
+    throw new InvalidOperationException("A chave JWT deve ter pelo menos 32 caracteres. Configure 'Jwt:Key' no appsettings.json ou variáveis de ambiente.");
+}
 
 builder.Services.AddAuthentication(options =>
 {
@@ -57,11 +89,27 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
+        ClockSkew = TimeSpan.Zero, // Remove tolerância de tempo para tokens expirados
 
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+            Encoding.UTF8.GetBytes(jwtKey))
+    };
+    
+    // Eventos para logging de segurança
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            // Log de falha de autenticação pode ser adicionado aqui
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            // Validações adicionais podem ser feitas aqui
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -75,10 +123,18 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.UseSwaggerUI(options =>
-        options.SwaggerEndpoint("/openapi/v1.json", "weather api"));
+        options.SwaggerEndpoint("/openapi/v1.json", "Expense Management API"));
+}
+else
+{
+    // Em produção, proteger Swagger com autenticação
+    // app.MapOpenApi().RequireAuthorization();
 }
 
 app.UseHttpsRedirection();
+
+// CORS deve vir antes de Authentication e Authorization
+app.UseCors("AllowExpenseWeb");
 
 app.UseAuthentication();
 
