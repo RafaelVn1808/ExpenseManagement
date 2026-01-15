@@ -1,6 +1,7 @@
 using AutoMapper;
 using ExpenseApi.Context;
 using ExpenseApi.Identity;
+using ExpenseApi.Middlewares;
 using ExpenseManagement.Context;
 using ExpenseManagement.Repositories;
 using ExpenseManagement.Services;
@@ -25,9 +26,11 @@ builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IExpenseService, ExpenseService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("AuthConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -40,14 +43,14 @@ builder.Services
         options.Password.RequireNonAlphanumeric = true;
         options.Password.RequiredUniqueChars = 1;
 
-        // Configurações de lockout para proteção contra brute force
+        // Configura��es de lockout para prote��o contra brute force
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
         options.Lockout.MaxFailedAccessAttempts = 5;
         options.Lockout.AllowedForNewUsers = true;
 
-        // Configurações de usuário
+        // Configura��es de usu�rio
         options.User.RequireUniqueEmail = true;
-        options.SignIn.RequireConfirmedEmail = false; // Pode ser habilitado em produção
+        options.SignIn.RequireConfirmedEmail = false; // Pode ser habilitado em produ��o
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
@@ -69,11 +72,11 @@ builder.Services.AddCors(options =>
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-// Validação da chave JWT
+// Valida��o da chave JWT
 var jwtKey = builder.Configuration["Jwt:Key"];
 if (string.IsNullOrEmpty(jwtKey) || jwtKey.Length < 32)
 {
-    throw new InvalidOperationException("A chave JWT deve ter pelo menos 32 caracteres. Configure 'Jwt:Key' no appsettings.json ou variáveis de ambiente.");
+    throw new InvalidOperationException("A chave JWT deve ter pelo menos 32 caracteres. Configure 'Jwt:Key' no appsettings.json ou vari�veis de ambiente.");
 }
 
 builder.Services.AddAuthentication(options =>
@@ -89,7 +92,7 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ClockSkew = TimeSpan.Zero, // Remove tolerância de tempo para tokens expirados
+        ClockSkew = TimeSpan.Zero, // Remove toler�ncia de tempo para tokens expirados
 
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Audience"],
@@ -118,6 +121,7 @@ builder.Services.AddAuthentication(options =>
 
 var app = builder.Build();
 
+app.UseMiddleware<ExceptionMiddleware>();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -127,7 +131,7 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    // Em produção, proteger Swagger com autenticação
+    // Em produ��o, proteger Swagger com autentica��o
     // app.MapOpenApi().RequireAuthorization();
 }
 
@@ -149,4 +153,4 @@ using (var scope = app.Services.CreateScope())
 }
 
 
-app.RunAsync();
+app.Run();

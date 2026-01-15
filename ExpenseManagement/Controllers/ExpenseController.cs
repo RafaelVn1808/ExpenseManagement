@@ -1,4 +1,5 @@
-﻿using ExpenseManagement.DTOs;
+﻿using ExpenseApi.Identity;
+using ExpenseManagement.DTOs;
 using ExpenseManagement.Models;
 using ExpenseManagement.Repositories;
 using ExpenseManagement.Services;
@@ -90,6 +91,7 @@ namespace ExpenseManagement.Controllers
         }
 
         [HttpDelete("{id:int}")]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<IActionResult> Delete(int id)
         {
             var expense = await _service.GetExpensesByIdAsync(id);

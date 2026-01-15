@@ -1,7 +1,4 @@
-﻿using ExpenseManagement.Models;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace ExpenseManagement.DTOs
 {
@@ -30,6 +27,7 @@ namespace ExpenseManagement.DTOs
         // Valor de cada parcela (calculado no service)
         public decimal InstallmentAmount { get; set; }
 
+        // Data limite / validade da despesa (opcional)
         public DateTime? Validity { get; set; }
 
         [Required(ErrorMessage = "O status é obrigatório.")]
@@ -47,7 +45,8 @@ namespace ExpenseManagement.DTOs
         [Required(ErrorMessage = "A categoria é obrigatória.")]
         [Range(1, int.MaxValue, ErrorMessage = "O ID da categoria deve ser maior que zero.")]
         public int CategoryId { get; set; }
+
+        // Apenas leitura (retorno da API)
         public string? CategoryName { get; set; }
     }
-
 }
