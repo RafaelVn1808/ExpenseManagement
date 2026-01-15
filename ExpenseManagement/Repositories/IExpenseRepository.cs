@@ -4,12 +4,10 @@ namespace ExpenseManagement.Repositories
 {
     public interface IExpenseRepository
     {
-
-        Task<IEnumerable<Expense>> GetExpenses();
-        Task<Expense> GetExpenseId(int expenseId);
+        Task<IEnumerable<Expense>> GetExpenses(string userId);
+        Task<Expense?> GetExpenseId(int expenseId, string userId);
         Task<Expense> Create(Expense expense);
         Task<Expense> Update(Expense expense);
-        Task<Expense> Delete(int expenseId);
-
+        Task<Expense?> Delete(int expenseId, string userId);
     }
 }

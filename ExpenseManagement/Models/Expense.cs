@@ -44,6 +44,11 @@ namespace ExpenseManagement.Models
 
         [JsonIgnore]
         public Category? Category { get; set; }
+
+        // Relacionamento com usuário
+        [Required]
+        [StringLength(450)] // Tamanho padrão do ID do Identity
+        public string UserId { get; set; } = string.Empty;
     }
 
 }

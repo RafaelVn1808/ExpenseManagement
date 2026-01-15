@@ -13,14 +13,20 @@ namespace ExpenseManagement.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<Expense>> GetExpenses()
+        public async Task<IEnumerable<Expense>> GetExpenses(string userId)
         {
-            return await _context.Expenses.Include(c=> c.Category).ToListAsync();
+            return await _context.Expenses
+                .Include(c => c.Category)
+                .Where(e => e.UserId == userId)
+                .ToListAsync();
         }
 
-        public async Task<Expense> GetExpenseId(int expenseId)
+        public async Task<Expense?> GetExpenseId(int expenseId, string userId)
         {
-            return await _context.Expenses.Include(c => c.Category).Where(e => e.ExpenseId == expenseId).FirstOrDefaultAsync();
+            return await _context.Expenses
+                .Include(c => c.Category)
+                .Where(e => e.ExpenseId == expenseId && e.UserId == userId)
+                .FirstOrDefaultAsync();
         }
 
         public async Task<Expense> Create(Expense expense)
@@ -47,10 +53,10 @@ namespace ExpenseManagement.Repositories
             return expense;
         }
 
-        public async Task<Expense?> Delete(int expenseId)
+        public async Task<Expense?> Delete(int expenseId, string userId)
         {
             var expense = await _context.Expenses
-                .FirstOrDefaultAsync(e => e.ExpenseId == expenseId);
+                .FirstOrDefaultAsync(e => e.ExpenseId == expenseId && e.UserId == userId);
 
             if (expense == null)
                 return null;
