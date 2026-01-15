@@ -29,10 +29,22 @@ namespace ExpenseApi.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto login)
         {
+            if (login == null || string.IsNullOrWhiteSpace(login.Email) || string.IsNullOrWhiteSpace(login.Password))
+            {
+                return BadRequest(new { message = "Email e senha são obrigatórios." });
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             var user = await _userManager.FindByEmailAsync(login.Email);
 
             if (user == null || !await _userManager.CheckPasswordAsync(user, login.Password))
-                return Unauthorized();
+            {
+                return Unauthorized(new { message = "Email ou senha inválidos." });
+            }
 
             var token = GenerateJwt(user);
 

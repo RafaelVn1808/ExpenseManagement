@@ -20,9 +20,9 @@ namespace ExpenseManagement.Repositories
                
         }
 
-        public async Task<Category> GetCategoryById(int categoryId)
+        public async Task<Category?> GetCategoryById(int categoryId)
         {
-            return _context.Categories.FirstOrDefault(c => c.CategoryId == categoryId);
+            return await _context.Categories.FirstOrDefaultAsync(c => c.CategoryId == categoryId);
         }
         public async Task<Category> Create(Category category)
         {
@@ -48,18 +48,18 @@ namespace ExpenseManagement.Repositories
             return category;
         }
 
-        public async Task<Category> Delete(int categoryId)
+        public async Task<Category?> Delete(int categoryId)
         {
             var category = await _context.Categories.FindAsync(categoryId);
 
             if (category == null)
-            {throw new ArgumentNullException(nameof(category));
-
+            {
+                return null;
             }
+
             _context.Categories.Remove(category);
             await _context.SaveChangesAsync();
             return category;
-
         }
 
         

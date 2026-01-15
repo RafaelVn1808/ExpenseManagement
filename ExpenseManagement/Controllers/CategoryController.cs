@@ -4,6 +4,7 @@ using ExpenseManagement.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 
 namespace ExpenseManagement.Controllers
 {
@@ -28,9 +29,9 @@ namespace ExpenseManagement.Controllers
         public async Task<ActionResult<IEnumerable<CategoryDTO>>> GetCategories()
         {
             var categoriesDTO = await _categoryService.GetCategories();
-            if (categoriesDTO == null)
+            if (categoriesDTO == null || !categoriesDTO.Any())
             {
-                return NotFound();
+                return NotFound("Nenhuma categoria encontrada.");
             }
             return Ok(categoriesDTO);
         }
@@ -38,20 +39,25 @@ namespace ExpenseManagement.Controllers
         [HttpGet("{id:int}", Name = "GetCategory")]
         public async Task<ActionResult<CategoryDTO>> GetCategoriesById(int id)
         {
-            var categoriesDTO = await _categoryService.GetCategoryById(id);
-            if (categoriesDTO == null)
+            var categoryDTO = await _categoryService.GetCategoryById(id);
+            if (categoryDTO == null)
             {
-                return NotFound();
+                return NotFound($"Categoria com id {id} não encontrada.");
             }
-            return Ok(categoriesDTO);
+            return Ok(categoryDTO);
         }
 
         [HttpPost]
-        public async Task<ActionResult> Post([FromBody] CategoryDTO categoryDTO)
+        public async Task<ActionResult<CategoryDTO>> Post([FromBody] CategoryDTO categoryDTO)
         {
             if (categoryDTO == null)
             {
-                return BadRequest("Invalid Data");
+                return BadRequest("Categoria inválida.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
             }
 
             await _categoryService.AddCategory(categoryDTO);
@@ -60,33 +66,40 @@ namespace ExpenseManagement.Controllers
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult> Put(int id, [FromBody] CategoryDTO categoryDTO)
+        public async Task<ActionResult<CategoryDTO>> Put(int id, [FromBody] CategoryDTO categoryDTO)
         {
-            if (id != categoryDTO.CategoryId)
+            if (categoryDTO == null || id != categoryDTO.CategoryId)
             {
-                return BadRequest("Invalid Data");
+                return BadRequest("Categoria inválida.");
             }
 
-            if (categoryDTO == null)
+            if (!ModelState.IsValid)
             {
-                return BadRequest("Invalid Data");
+                return BadRequest(ModelState);
             }
+
+            var categoriaExistente = await _categoryService.GetCategoryById(id);
+            if (categoriaExistente == null)
+            {
+                return NotFound($"Categoria com id {id} não encontrada.");
+            }
+
             await _categoryService.UpdateCategory(categoryDTO);
             return Ok(categoryDTO);
         }
 
         [HttpDelete("{id:int}")]
-        public async Task<ActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             var categoryDTO = await _categoryService.GetCategoryById(id);
             if (categoryDTO == null)
             {
-                return NotFound("Product not found");
+                return NotFound($"Categoria com id {id} não encontrada.");
             }
+
             await _categoryService.RemoveCategory(id);
 
-            return Ok(categoryDTO);
-
+            return NoContent();
         }
     }
 }

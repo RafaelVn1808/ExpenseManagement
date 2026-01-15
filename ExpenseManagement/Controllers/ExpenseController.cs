@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace ExpenseManagement.Controllers
@@ -26,37 +27,38 @@ namespace ExpenseManagement.Controllers
 
 
         [HttpGet]
-        public async Task <ActionResult<IEnumerable<Expense>>> Get()
+        public async Task<ActionResult<IEnumerable<ExpenseDTO>>> Get()
         {
-
             var expenses = await _service.GetAllExpensesAsync();
-            if (expenses == null)
+            if (expenses == null || !expenses.Any())
             {
-                return NotFound("Nenhuma despesa encontrada...");
+                return NotFound("Nenhuma despesa encontrada.");
             }
             return Ok(expenses);
-
         }
 
         [HttpGet("{id:int}", Name = "ObterExpense")]
-        public async Task<ActionResult<Category>> GetById(int id)
+        public async Task<ActionResult<ExpenseDTO>> GetById(int id)
         {
-            var category = await _service.GetExpensesByIdAsync(id);
-            if (category == null)
+            var expense = await _service.GetExpensesByIdAsync(id);
+            if (expense == null)
             {
-                 return NotFound($"Dívida com id {id} não encontrada...");
+                return NotFound($"Despesa com id {id} não encontrada.");
             }
-            return Ok(category);
-
+            return Ok(expense);
         }
 
         [HttpPost]
-
-        public async Task<ActionResult<Category>> Post([FromBody] ExpenseDTO expenseDTO)
+        public async Task<ActionResult<ExpenseDTO>> Post([FromBody] ExpenseDTO expenseDTO)
         {
             if (expenseDTO == null)
             {
-               return BadRequest("expense inválida.");
+                return BadRequest("Despesa inválida.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
             }
 
             await _service.CreateExpensesAsync(expenseDTO);
@@ -65,17 +67,24 @@ namespace ExpenseManagement.Controllers
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult> Put(int id, ExpenseDTO expenseDTO)
+        public async Task<ActionResult<ExpenseDTO>> Put(int id, ExpenseDTO expenseDTO)
         {
             if (expenseDTO == null || expenseDTO.ExpenseId != id)
             {
-               return BadRequest("Expense inválida.");
+                return BadRequest("Despesa inválida.");
             }
-            var expenseExistente = _service.GetExpensesByIdAsync(id);
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var expenseExistente = await _service.GetExpensesByIdAsync(id);
             if (expenseExistente == null)
-            {               
-                return NotFound($"Expense com id {id} não encontrada...");
+            {
+                return NotFound($"Despesa com id {id} não encontrada.");
             }
+
             await _service.UpdateExpenseAsync(expenseDTO);
             return Ok(expenseDTO);
         }
@@ -86,11 +95,11 @@ namespace ExpenseManagement.Controllers
             var expense = await _service.GetExpensesByIdAsync(id);
 
             if (expense == null)
-                return NotFound($"Expense com id {id} não encontrada...");
+                return NotFound($"Despesa com id {id} não encontrada.");
 
             await _service.DeleteExpenseAsync(id);
 
-            return NoContent(); // 204
+            return NoContent();
         }
 
     }
