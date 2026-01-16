@@ -34,7 +34,7 @@ namespace ExpenseWeb.Services
                 Encoding.UTF8,
                 "application/json");
 
-            var response = await client.PostAsync("api/account/login", content);
+            var response = await client.PostAsync("api/auth/login", content);
 
             if (!response.IsSuccessStatusCode)
                 return null;
@@ -47,6 +47,27 @@ namespace ExpenseWeb.Services
                 .RootElement
                 .GetProperty("token")
                 .GetString();
+        }
+
+        public async Task<bool> RegisterAsync(string email, string password)
+        {
+            var client = _httpClientFactory.CreateClient("ExpenseApi");
+
+            var payload = new
+            {
+                email,
+                password,
+                confirmPassword = password
+            };
+
+            var content = new StringContent(
+                JsonSerializer.Serialize(payload),
+                Encoding.UTF8,
+                "application/json");
+
+            var response = await client.PostAsync("api/auth/register", content);
+
+            return response.IsSuccessStatusCode;
         }
     }
 }

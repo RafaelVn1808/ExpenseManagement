@@ -51,6 +51,31 @@ namespace ExpenseWeb.Controllers
             return RedirectToAction("Index", "Expense");
         }
 
+        [HttpGet]
+        public IActionResult Register()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Register(RegisterViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var success = await _authService.RegisterAsync(model.Email, model.Password);
+
+            if (!success)
+            {
+                ModelState.AddModelError("", "Erro ao criar conta. Verifique se o email já não está cadastrado.");
+                return View(model);
+            }
+
+            TempData["SuccessMessage"] = "Conta criada com sucesso! Faça login para continuar.";
+            return RedirectToAction(nameof(Login));
+        }
+
         public async Task<IActionResult> Logout()
         {
             HttpContext.Session.Clear();
