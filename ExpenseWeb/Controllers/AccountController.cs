@@ -1,9 +1,12 @@
 ﻿using ExpenseWeb.Models;
 using ExpenseWeb.Services.Contracts;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ExpenseWeb.Controllers
 {
+    [AllowAnonymous]
     public class AccountController : Controller
     {
         private readonly IAuthService _authService;
@@ -30,18 +33,28 @@ namespace ExpenseWeb.Controllers
 
             if (string.IsNullOrEmpty(token))
             {
-                ModelState.AddModelError("", "Login inválido");
+                ModelState.AddModelError("", "Email ou senha inválidos");
                 return View(model);
             }
 
             HttpContext.Session.SetString("JWToken", token);
 
+            // Criar claims do usuário para autenticação
+            var claims = new List<System.Security.Claims.Claim>
+            {
+                new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Email, model.Email)
+            };
+
+            var claimsIdentity = new System.Security.Claims.ClaimsIdentity(claims, "CookieAuth");
+            await HttpContext.SignInAsync("Cookies", new System.Security.Claims.ClaimsPrincipal(claimsIdentity));
+
             return RedirectToAction("Index", "Expense");
         }
 
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
         {
             HttpContext.Session.Clear();
+            await HttpContext.SignOutAsync("Cookies");
             return RedirectToAction(nameof(Login));
         }
     }

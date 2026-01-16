@@ -1,5 +1,7 @@
+using ExpenseWeb.Middlewares;
 using ExpenseWeb.Services;
 using ExpenseWeb.Services.Contracts;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +26,19 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
+// 🔐 HTTP CONTEXT ACCESSOR (para middleware)
+builder.Services.AddHttpContextAccessor();
+
+// 🔐 AUTENTICAÇÃO
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/Login";
+        options.ExpireTimeSpan = TimeSpan.FromHours(2);
+        options.SlidingExpiration = true;
+    });
+
 // 🔧 SERVICES
 builder.Services.AddScoped<IExpenseService, ExpenseService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
@@ -45,6 +60,7 @@ app.UseRouting();
 
 // ⚠️ ORDEM CORRETA
 app.UseSession();
+app.UseJwtSessionAuthentication(); // Middleware customizado para validar JWT da sessão
 app.UseAuthentication();
 app.UseAuthorization();
 
