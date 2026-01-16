@@ -1,3 +1,4 @@
+using ExpenseWeb.Infrastructure;
 using ExpenseWeb.Middlewares;
 using ExpenseWeb.Services;
 using ExpenseWeb.Services.Contracts;
@@ -14,7 +15,8 @@ builder.Services.AddHttpClient("ExpenseApi", client =>
     client.BaseAddress = new Uri(
         builder.Configuration["ServiceUri:ExpenseApi"]!
     );
-});
+})
+.AddHttpMessageHandler<JwtHandler>(); // Adiciona o token JWT automaticamente em todas as requisições
 
 // 🔐 SESSION (OBRIGATÓRIO)
 builder.Services.AddDistributedMemoryCache();

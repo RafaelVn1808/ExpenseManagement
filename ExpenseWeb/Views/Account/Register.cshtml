@@ -1,7 +1,7 @@
-@model LoginViewModel
+@model RegisterViewModel
 @{
-    ViewData["Title"] = "Login";
-    Layout = null; // Sem layout para a página de login
+    ViewData["Title"] = "Registro";
+    Layout = null; // Sem layout para a página de registro
 }
 
 <!DOCTYPE html>
@@ -37,7 +37,7 @@
             padding: 20px;
         }
 
-        .login-container {
+        .register-container {
             background: white;
             border-radius: 16px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -46,26 +46,26 @@
             width: 100%;
         }
 
-        .login-header {
+        .register-header {
             background: var(--primary-bg);
             color: white;
             padding: 2rem;
             text-align: center;
         }
 
-        .login-header i {
+        .register-header i {
             font-size: 3rem;
             color: var(--accent-color);
             margin-bottom: 1rem;
         }
 
-        .login-header h2 {
+        .register-header h2 {
             margin: 0;
             font-weight: 600;
             font-size: 1.75rem;
         }
 
-        .login-body {
+        .register-body {
             padding: 2.5rem;
         }
 
@@ -93,7 +93,7 @@
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
-        .btn-login {
+        .btn-register {
             width: 100%;
             background: var(--accent-color);
             border: none;
@@ -106,13 +106,13 @@
             margin-top: 0.5rem;
         }
 
-        .btn-login:hover {
+        .btn-register:hover {
             background: #2563eb;
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
         }
 
-        .btn-login:active {
+        .btn-register:active {
             transform: translateY(0);
         }
 
@@ -147,17 +147,56 @@
             padding: 0.875rem;
             margin-bottom: 1.5rem;
         }
+
+        .alert-success {
+            background-color: #dcfce7;
+            border-color: #bbf7d0;
+            color: #166534;
+            border-radius: 8px;
+            padding: 0.875rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .link-login {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .link-login a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .link-login a:hover {
+            text-decoration: underline;
+        }
+
+        .password-requirements {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 0.25rem;
+        }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-header">
-            <i class="bi bi-wallet2"></i>
-            <h2>ExpenseWeb</h2>
-            <p class="mb-0" style="opacity: 0.9; margin-top: 0.5rem;">Gestão de Despesas</p>
+    <div class="register-container">
+        <div class="register-header">
+            <i class="bi bi-person-plus"></i>
+            <h2>Criar Conta</h2>
+            <p class="mb-0" style="opacity: 0.9; margin-top: 0.5rem;">ExpenseWeb</p>
         </div>
         
-        <div class="login-body">
+        <div class="register-body">
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success" role="alert">
+                    @TempData["SuccessMessage"]
+                </div>
+            }
+
             @if (!ViewData.ModelState.IsValid && ViewData.ModelState.ErrorCount > 0)
             {
                 <div class="alert alert-danger" role="alert">
@@ -168,7 +207,7 @@
                 </div>
             }
 
-            <form asp-action="Login" method="post">
+            <form asp-action="Register" method="post">
                 @Html.AntiForgeryToken()
                 
                 <div class="form-group">
@@ -188,19 +227,33 @@
                     </label>
                     <div class="input-group">
                         <i class="bi bi-lock"></i>
-                        <input asp-for="Password" class="form-control" placeholder="••••••••" autocomplete="current-password" />
+                        <input asp-for="Password" class="form-control" placeholder="••••••••" autocomplete="new-password" />
                     </div>
                     <span asp-validation-for="Password" class="text-danger"></span>
+                    <div class="password-requirements">
+                        <small>Mínimo 8 caracteres, incluindo: maiúscula, minúscula, número e caractere especial</small>
+                    </div>
                 </div>
 
-                <button type="submit" class="btn btn-login">
-                    <i class="bi bi-box-arrow-in-right me-2"></i>
-                    Entrar
+                <div class="form-group">
+                    <label asp-for="ConfirmPassword" class="form-label">
+                        <i class="bi bi-lock-fill me-1"></i> Confirmar Senha
+                    </label>
+                    <div class="input-group">
+                        <i class="bi bi-lock-fill"></i>
+                        <input asp-for="ConfirmPassword" class="form-control" placeholder="••••••••" autocomplete="new-password" />
+                    </div>
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                </div>
+
+                <button type="submit" class="btn btn-register">
+                    <i class="bi bi-person-plus me-2"></i>
+                    Criar Conta
                 </button>
             </form>
 
-            <div class="link-register" style="text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e2e8f0;">
-                <small style="color: #64748b;">Não tem uma conta? <a asp-action="Register" style="color: var(--accent-color); text-decoration: none; font-weight: 500;">Criar conta</a></small>
+            <div class="link-login">
+                <small>Já tem uma conta? <a asp-action="Login">Fazer login</a></small>
             </div>
         </div>
     </div>
