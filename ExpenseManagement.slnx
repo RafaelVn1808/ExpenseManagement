@@ -1,4 +1,5 @@
 <Solution>
   <Project Path="ExpenseManagement/ExpenseApi.csproj" />
   <Project Path="ExpenseWeb/ExpenseWeb.csproj" Id="e59f08a7-d1f1-45d6-b7fd-e1b5cb441bed" />
+  <Project Path="ExpenseManagement.Tests/ExpenseManagement.Tests.csproj" />
 </Solution>
