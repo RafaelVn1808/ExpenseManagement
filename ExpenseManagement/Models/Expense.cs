@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
@@ -31,8 +31,7 @@ namespace ExpenseManagement.Models
         public DateTime? Validity { get; set; }
 
         [Required]
-        [StringLength(20)]
-        public string? Status { get; set; }
+        public ExpenseStatus Status { get; set; }
 
         [StringLength(300)]
         public string? NoteImageUrl { get; set; }

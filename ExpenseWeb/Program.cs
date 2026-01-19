@@ -31,6 +31,9 @@ builder.Services.AddSession(options =>
 // 🔐 HTTP CONTEXT ACCESSOR (para middleware)
 builder.Services.AddHttpContextAccessor();
 
+// 🔐 JWT HANDLER (para adicionar token nas requisições HTTP)
+builder.Services.AddTransient<JwtHandler>();
+
 // 🔐 AUTENTICAÇÃO
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -45,6 +48,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.AddScoped<IExpenseService, ExpenseService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ImageUploadService>();
 
 var app = builder.Build();
 

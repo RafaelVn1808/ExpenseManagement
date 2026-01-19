@@ -1,4 +1,4 @@
-﻿@model ExpenseWeb.Models.ExpenseViewModel
+@model ExpenseWeb.Models.ExpenseViewModel
 
 @{
     ViewData["Title"] = "Excluir Despesa";
@@ -42,7 +42,7 @@
                     </div>
                 </div>
 
-                <form asp-action="DeleteExpense">
+                <form asp-action="DeleteExpenseConfirmed" method="post">
                     <!-- Campo Oculto para o ID -->
                     <input type="hidden" asp-for="ExpenseId" />
 

@@ -27,6 +27,7 @@ builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IExpenseService, ExpenseService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IImageUploadService, ImageUploadService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -55,7 +56,13 @@ builder.Services
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-builder.Services.AddControllers().AddJsonOptions(options=>options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+builder.Services.AddMemoryCache();
+
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 
 // CORS Configuration
 builder.Services.AddCors(options =>
@@ -132,10 +139,11 @@ if (app.Environment.IsDevelopment())
 else
 {
     // Em produ��o, proteger Swagger com autentica��o
-    // app.MapOpenApi().RequireAuthorization();
+    app.MapOpenApi().RequireAuthorization();
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 
 // CORS deve vir antes de Authentication e Authorization
 app.UseCors("AllowExpenseWeb");

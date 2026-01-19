@@ -1,8 +1,9 @@
-﻿using AutoMapper;
+using AutoMapper;
 using ExpenseApi.ErrorResponse;
 using ExpenseManagement.DTOs;
 using ExpenseManagement.Models;
 using ExpenseManagement.Repositories;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace ExpenseManagement.Services
 {
@@ -10,17 +11,29 @@ namespace ExpenseManagement.Services
     {
         private readonly ICategoryRepository _categoryRepository;
         private readonly IMapper _mapper;
+        private readonly IMemoryCache _cache;
+        private const string CategoriesCacheKey = "categories:all";
 
-        public CategoryService(ICategoryRepository categoryRepository, IMapper mapper)
+        public CategoryService(ICategoryRepository categoryRepository, IMapper mapper, IMemoryCache cache)
         {
             _categoryRepository = categoryRepository;
             _mapper = mapper;
+            _cache = cache;
         }
 
         public async Task<IEnumerable<CategoryDTO>> GetCategories()
         {
+            if (_cache.TryGetValue(CategoriesCacheKey, out IEnumerable<CategoryDTO>? cached) && cached != null)
+            {
+                return cached;
+            }
+
             var categoriesEntity = await _categoryRepository.GetCategories();
-            return _mapper.Map<IEnumerable<CategoryDTO>>(categoriesEntity);
+            var categoriesDto = _mapper.Map<IEnumerable<CategoryDTO>>(categoriesEntity);
+
+            _cache.Set(CategoriesCacheKey, categoriesDto, TimeSpan.FromMinutes(10));
+
+            return categoriesDto;
         }
 
         public async Task<CategoryDTO> GetCategoryById(int categoryId)
@@ -39,9 +52,10 @@ namespace ExpenseManagement.Services
                 throw new BusinessException("O nome da categoria é obrigatório");
 
             var categoryEntity = _mapper.Map<Category>(category);
-            await _categoryRepository.Create(categoryEntity);
+            var createdCategory = await _categoryRepository.Create(categoryEntity);
 
-            category.CategoryId = categoryEntity.CategoryId;
+            category.CategoryId = createdCategory.CategoryId;
+            _cache.Remove(CategoriesCacheKey);
         }
 
         public async Task UpdateCategory(CategoryDTO categoryDto)
@@ -53,6 +67,7 @@ namespace ExpenseManagement.Services
 
             var categoryEntity = _mapper.Map<Category>(categoryDto);
             await _categoryRepository.Update(categoryEntity);
+            _cache.Remove(CategoriesCacheKey);
         }
 
         public async Task RemoveCategory(int categoryId)
@@ -61,6 +76,7 @@ namespace ExpenseManagement.Services
             if (categoryEntity != null)
             {
                 await _categoryRepository.Delete(categoryEntity.CategoryId);
+                _cache.Remove(CategoriesCacheKey);
             }
         }
     }

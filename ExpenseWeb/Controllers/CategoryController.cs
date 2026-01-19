@@ -1,0 +1,66 @@
+using ExpenseWeb.Models;
+using ExpenseWeb.Services.Contracts;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace ExpenseWeb.Controllers
+{
+    [Authorize]
+    public class CategoryController : Controller
+    {
+        private readonly ICategoryService _categoryService;
+
+        public CategoryController(ICategoryService categoryService)
+        {
+            _categoryService = categoryService;
+        }
+
+        // GET: Category/Create
+        [HttpGet]
+        public IActionResult Create()
+        {
+            return View();
+        }
+
+        // POST: Category/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(CategoryViewModel category)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(category);
+            }
+
+            try
+            {
+                var result = await _categoryService.CreateCategory(category);
+
+                if (result is null)
+                {
+                    ModelState.AddModelError("", "Erro ao criar categoria. Verifique se você está logado como administrador e tente novamente.");
+                    return View(category);
+                }
+
+                TempData["SuccessMessage"] = "Categoria criada com sucesso!";
+                return RedirectToAction("Index", "Expense");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                return View(category);
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("", ex.Message);
+                return View(category);
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", $"Erro ao criar categoria: {ex.Message}");
+                return View(category);
+            }
+
+        }
+    }
+}

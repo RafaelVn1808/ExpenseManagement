@@ -14,6 +14,7 @@ namespace ExpenseManagement.Tests.Services
     public class ExpenseServiceTests
     {
         private readonly Mock<IExpenseRepository> _expenseRepositoryMock;
+        private readonly Mock<ICategoryRepository> _categoryRepositoryMock;
         private readonly IMapper _mapper;
         private readonly ExpenseService _expenseService;
         private readonly string _testUserId = "user-123";
@@ -21,12 +22,20 @@ namespace ExpenseManagement.Tests.Services
         public ExpenseServiceTests()
         {
             _expenseRepositoryMock = new Mock<IExpenseRepository>();
+            _categoryRepositoryMock = new Mock<ICategoryRepository>();
 
             // Configurar AutoMapper
             var config = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>());
             _mapper = config.CreateMapper();
 
-            _expenseService = new ExpenseService(_expenseRepositoryMock.Object, _mapper);
+            _categoryRepositoryMock
+                .Setup(r => r.GetCategoryById(It.IsAny<int>()))
+                .ReturnsAsync(new Category { CategoryId = 1, Name = "Teste" });
+
+            _expenseService = new ExpenseService(
+                _expenseRepositoryMock.Object,
+                _categoryRepositoryMock.Object,
+                _mapper);
         }
 
         [Fact]
@@ -62,6 +71,43 @@ namespace ExpenseManagement.Tests.Services
             result.Should().NotBeNull();
             result.Should().HaveCount(2);
             result.First().Name.Should().Be("Supermercado");
+        }
+
+        [Fact]
+        public async Task GetExpensesPagedAsync_DeveRetornarPaginado()
+        {
+            // Arrange
+            var parameters = new ExpenseQueryParameters
+            {
+                Page = 1,
+                PageSize = 2
+            };
+
+            var expenses = new List<Expense>
+            {
+                new Expense { ExpenseId = 1, Name = "Supermercado", TotalAmount = 100.00m, UserId = _testUserId },
+                new Expense { ExpenseId = 2, Name = "Transporte", TotalAmount = 50.00m, UserId = _testUserId }
+            };
+
+            var paged = new PagedResult<Expense>
+            {
+                Page = 1,
+                PageSize = 2,
+                TotalCount = 2,
+                Items = expenses
+            };
+
+            _expenseRepositoryMock
+                .Setup(r => r.GetExpensesPaged(parameters, _testUserId))
+                .ReturnsAsync(paged);
+
+            // Act
+            var result = await _expenseService.GetExpensesPagedAsync(parameters, _testUserId);
+
+            // Assert
+            result.Items.Should().HaveCount(2);
+            result.TotalCount.Should().Be(2);
+            result.Page.Should().Be(1);
         }
 
         [Fact]
@@ -115,8 +161,8 @@ namespace ExpenseManagement.Tests.Services
                 Name = "Supermercado",
                 TotalAmount = 100.00m,
                 Installments = 1,
-                StartDate = DateTime.Now,
-                Status = "Pendente",
+                StartDate = DateTime.Today,
+                Status = ExpenseStatus.Pendente,
                 CategoryId = 1
             };
 
@@ -155,8 +201,8 @@ namespace ExpenseManagement.Tests.Services
                 Name = "Supermercado",
                 TotalAmount = 0m,
                 Installments = 1,
-                StartDate = DateTime.Now,
-                Status = "Pendente",
+                StartDate = DateTime.Today,
+                Status = ExpenseStatus.Pendente,
                 CategoryId = 1
             };
 
@@ -177,8 +223,30 @@ namespace ExpenseManagement.Tests.Services
                 Name = "Supermercado",
                 TotalAmount = -10m,
                 Installments = 1,
-                StartDate = DateTime.Now,
-                Status = "Pendente",
+                StartDate = DateTime.Today,
+                Status = ExpenseStatus.Pendente,
+                CategoryId = 1
+            };
+
+            // Act & Assert
+            await Assert.ThrowsAsync<BusinessException>(
+                () => _expenseService.CreateExpensesAsync(expenseDto, _testUserId)
+            );
+
+            _expenseRepositoryMock.Verify(r => r.Create(It.IsAny<Expense>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task CreateExpensesAsync_ComDataFutura_DeveLancarBusinessException()
+        {
+            // Arrange
+            var expenseDto = new ExpenseDTO
+            {
+                Name = "Supermercado",
+                TotalAmount = 100.00m,
+                Installments = 1,
+                StartDate = DateTime.Today.AddDays(1),
+                Status = ExpenseStatus.Pendente,
                 CategoryId = 1
             };
 
@@ -199,8 +267,8 @@ namespace ExpenseManagement.Tests.Services
                 Name = "Supermercado",
                 TotalAmount = 100.00m,
                 Installments = 0,
-                StartDate = DateTime.Now,
-                Status = "Pendente",
+                StartDate = DateTime.Today,
+                Status = ExpenseStatus.Pendente,
                 CategoryId = 1
             };
 
@@ -231,8 +299,8 @@ namespace ExpenseManagement.Tests.Services
                 Name = "Supermercado",
                 TotalAmount = 100.00m,
                 Installments = 3,
-                StartDate = DateTime.Now,
-                Status = "Pendente",
+                StartDate = DateTime.Today,
+                Status = ExpenseStatus.Pendente,
                 CategoryId = 1
             };
 
@@ -263,8 +331,8 @@ namespace ExpenseManagement.Tests.Services
                 Name = "Supermercado Atualizado",
                 TotalAmount = 150.00m,
                 Installments = 2,
-                StartDate = DateTime.Now,
-                Status = "Pago",
+                StartDate = DateTime.Today,
+                Status = ExpenseStatus.Pago,
                 CategoryId = 1
             };
 
@@ -305,8 +373,8 @@ namespace ExpenseManagement.Tests.Services
                 ExpenseId = 999,
                 Name = "Inexistente",
                 TotalAmount = 100.00m,
-                StartDate = DateTime.Now,
-                Status = "Pendente",
+                StartDate = DateTime.Today,
+                Status = ExpenseStatus.Pendente,
                 CategoryId = 1
             };
 

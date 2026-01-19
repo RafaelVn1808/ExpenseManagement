@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using ExpenseApi.ErrorResponse;
 using ExpenseManagement.DTOs;
 using ExpenseManagement.Models;
@@ -9,11 +9,13 @@ namespace ExpenseManagement.Services
     public class ExpenseService : IExpenseService
     {
         private readonly IExpenseRepository _expenseRepository;
+        private readonly ICategoryRepository _categoryRepository;
         private readonly IMapper _mapper;
 
-        public ExpenseService(IExpenseRepository expenseRepository, IMapper mapper)
+        public ExpenseService(IExpenseRepository expenseRepository, ICategoryRepository categoryRepository, IMapper mapper)
         {
             _expenseRepository = expenseRepository;
+            _categoryRepository = categoryRepository;
             _mapper = mapper;
         }
 
@@ -21,6 +23,31 @@ namespace ExpenseManagement.Services
         {
             var expensesEntity = await _expenseRepository.GetExpenses(userId);
             return _mapper.Map<IEnumerable<ExpenseDTO>>(expensesEntity);
+        }
+
+        public async Task<PagedResult<ExpenseDTO>> GetExpensesPagedAsync(ExpenseQueryParameters parameters, string userId)
+        {
+            if (parameters.Page <= 0)
+                parameters.Page = 1;
+
+            if (parameters.PageSize <= 0)
+                parameters.PageSize = 20;
+
+            if (parameters.PageSize > 100)
+                parameters.PageSize = 100;
+
+            if (parameters.From.HasValue && parameters.To.HasValue && parameters.From > parameters.To)
+                throw new BusinessException("A data inicial não pode ser maior que a data final.");
+
+            var pagedExpenses = await _expenseRepository.GetExpensesPaged(parameters, userId);
+
+            return new PagedResult<ExpenseDTO>
+            {
+                Page = pagedExpenses.Page,
+                PageSize = pagedExpenses.PageSize,
+                TotalCount = pagedExpenses.TotalCount,
+                Items = _mapper.Map<IEnumerable<ExpenseDTO>>(pagedExpenses.Items)
+            };
         }
 
         public async Task<ExpenseDTO?> GetExpensesByIdAsync(int id, string userId)
@@ -35,6 +62,8 @@ namespace ExpenseManagement.Services
 
         public async Task CreateExpensesAsync(ExpenseDTO expenseDto, string userId)
         {
+            await ValidateExpenseAsync(expenseDto);
+
             if (expenseDto.TotalAmount <= 0)
                 throw new BusinessException("O valor total deve ser maior que zero");
 
@@ -52,6 +81,8 @@ namespace ExpenseManagement.Services
 
         public async Task UpdateExpenseAsync(ExpenseDTO expenseDto, string userId)
         {
+            await ValidateExpenseAsync(expenseDto);
+
             // Verificar se a despesa pertence ao usuário
             var existingExpense = await _expenseRepository.GetExpenseId(expenseDto.ExpenseId, userId);
             if (existingExpense == null)
@@ -77,6 +108,22 @@ namespace ExpenseManagement.Services
                 return null;
 
             return _mapper.Map<ExpenseDTO>(expense);
+        }
+
+        private async Task ValidateExpenseAsync(ExpenseDTO expenseDto)
+        {
+            if (!Enum.IsDefined(typeof(ExpenseStatus), expenseDto.Status))
+                throw new BusinessException("O status informado é inválido.");
+
+            var category = await _categoryRepository.GetCategoryById(expenseDto.CategoryId);
+            if (category == null)
+                throw new BusinessException("A categoria informada não existe.");
+
+            if (expenseDto.StartDate.Date > DateTime.Today)
+                throw new BusinessException("A data de início não pode ser futura.");
+
+            if (expenseDto.Validity.HasValue && expenseDto.Validity.Value < expenseDto.StartDate)
+                throw new BusinessException("A data de validade não pode ser anterior à data de início.");
         }
     }
 }

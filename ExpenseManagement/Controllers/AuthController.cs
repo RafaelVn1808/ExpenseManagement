@@ -1,12 +1,15 @@
-﻿using ExpenseApi.Identity;
+using ExpenseApi.Context;
+using ExpenseApi.Identity;
 using ExpenseApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace ExpenseApi.Controllers
@@ -16,15 +19,18 @@ namespace ExpenseApi.Controllers
     public class AuthController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ApplicationDbContext _context;
         private readonly IConfiguration _config;
         private readonly ILogger<AuthController> _logger;
 
         public AuthController(
             UserManager<ApplicationUser> userManager,
+            ApplicationDbContext context,
             IConfiguration config,
             ILogger<AuthController> logger)
         {
             _userManager = userManager;
+            _context = context;
             _config = config;
             _logger = logger;
         }
@@ -116,23 +122,55 @@ namespace ExpenseApi.Controllers
             // Resetar contador de tentativas falhadas em caso de sucesso
             await _userManager.ResetAccessFailedCountAsync(user);
 
-            var token = GenerateJwt(user);
+            var authResponse = await GenerateTokensAsync(user);
 
             _logger.LogInformation("Login bem-sucedido: {Email}", login.Email);
 
-            return Ok(new { token });
+            return Ok(authResponse);
         }
 
-        private string GenerateJwt(ApplicationUser user)
+        [AllowAnonymous]
+        [HttpPost("refresh")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequestDto request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var existingToken = await _context.RefreshTokens
+                .Include(rt => rt.User)
+                .FirstOrDefaultAsync(rt => rt.Token == request.RefreshToken);
+
+            if (existingToken == null || !existingToken.IsActive || existingToken.User == null)
+            {
+                return Unauthorized(new { message = "Refresh token inválido ou expirado." });
+            }
+
+            existingToken.RevokedAt = DateTime.UtcNow;
+
+            var authResponse = await GenerateTokensAsync(existingToken.User);
+
+            return Ok(authResponse);
+        }
+
+        private async Task<AuthResponseDto> GenerateTokensAsync(ApplicationUser user)
         {
             var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.Name, user.Email),
-            new Claim(ClaimTypes.NameIdentifier, user.Id)
-        };
+            {
+                new Claim(ClaimTypes.Name, user.Email!),
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(ClaimTypes.Email, user.Email!)
+            };
+
+            // 🔐 ADICIONAR ROLES AO TOKEN
+            var roles = await _userManager.GetRolesAsync(user);
+            claims.AddRange(roles.Select(role =>
+                new Claim(ClaimTypes.Role, role)
+            ));
 
             var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+                Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
 
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -140,11 +178,35 @@ namespace ExpenseApi.Controllers
                 issuer: _config["Jwt:Issuer"],
                 audience: _config["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddHours(
-                    int.Parse(_config["Jwt:ExpireHours"])),
+                expires: DateTime.UtcNow.AddHours(int.Parse(_config["Jwt:ExpireHours"] ?? "2")),
                 signingCredentials: creds);
 
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            var refreshToken = GenerateRefreshToken();
+            var refreshExpiresAt = DateTime.UtcNow.AddDays(
+                int.Parse(_config["Jwt:RefreshTokenDays"] ?? "7"));
+
+            _context.RefreshTokens.Add(new RefreshToken
+            {
+                Token = refreshToken,
+                UserId = user.Id,
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = refreshExpiresAt
+            });
+
+            await _context.SaveChangesAsync();
+
+            return new AuthResponseDto
+            {
+                Token = new JwtSecurityTokenHandler().WriteToken(token),
+                RefreshToken = refreshToken,
+                ExpiresAt = token.ValidTo
+            };
+        }
+
+        private static string GenerateRefreshToken()
+        {
+            var bytes = RandomNumberGenerator.GetBytes(64);
+            return Convert.ToBase64String(bytes);
         }
     }
 }
