@@ -1,4 +1,4 @@
-﻿using ExpenseApi.Identity;
+using ExpenseApi.Identity;
 using ExpenseManagement.DTOs;
 using ExpenseManagement.Models;
 using ExpenseManagement.Repositories;
@@ -19,11 +19,16 @@ namespace ExpenseManagement.Controllers
     public class ExpenseController : ControllerBase
     {
         private readonly IExpenseService _service;
+        private readonly IImageUploadService _imageUploadService;
         private readonly ILogger<ExpenseController> _logger;
 
-        public ExpenseController(IExpenseService service, ILogger<ExpenseController> logger)
+        public ExpenseController(
+            IExpenseService service,
+            IImageUploadService imageUploadService,
+            ILogger<ExpenseController> logger)
         {
             _service = service;
+            _imageUploadService = imageUploadService;
             _logger = logger;
         }
 
@@ -39,16 +44,11 @@ namespace ExpenseManagement.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ExpenseDTO>>> Get()
+        public async Task<ActionResult<PagedResult<ExpenseDTO>>> Get([FromQuery] ExpenseQueryParameters parameters)
         {
             var userId = GetUserId();
-            var expenses = await _service.GetAllExpensesAsync(userId);
-            
-            if (expenses == null || !expenses.Any())
-            {
-                return NotFound("Nenhuma despesa encontrada.");
-            }
-            
+            var expenses = await _service.GetExpensesPagedAsync(parameters, userId);
+
             return Ok(expenses);
         }
 
@@ -64,6 +64,27 @@ namespace ExpenseManagement.Controllers
             }
             
             return Ok(expense);
+        }
+
+        [HttpPost("upload")]
+        [RequestSizeLimit(5 * 1024 * 1024)]
+        public async Task<IActionResult> UploadImage([FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("Arquivo inválido.");
+            }
+
+            var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp", "image/gif" };
+            if (!allowedTypes.Contains(file.ContentType))
+            {
+                return BadRequest("Tipo de arquivo não suportado. Use JPEG, PNG ou WEBP.");
+            }
+
+            var relativeUrl = await _imageUploadService.SaveExpenseImageAsync(file);
+            var absoluteUrl = $"{Request.Scheme}://{Request.Host}{relativeUrl}";
+
+            return Ok(new { url = absoluteUrl });
         }
 
         [HttpPost]

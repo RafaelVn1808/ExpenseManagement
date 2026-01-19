@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace ExpenseWeb.Models
 {
@@ -17,13 +18,21 @@ namespace ExpenseWeb.Models
 
         public DateTime Validity { get; set; }
 
-        public int Installments { get; set; } // total de parcelas
+        [Range(1, 120, ErrorMessage = "O número de parcelas deve estar entre 1 e 120.")]
+        public int Installments { get; set; } = 1; // total de parcelas
 
-        [Required]
+        [Required(ErrorMessage = "O status é obrigatório.")]
         public string Status { get; set; } = string.Empty;
 
         public string? NoteImageUrl { get; set; }
         public string? ProofImageUrl { get; set; }
+
+        // Propriedades para upload de arquivos (não são enviadas para a API)
+        [Display(Name = "Imagem da Nota Fiscal")]
+        public IFormFile? NoteImageFile { get; set; }
+
+        [Display(Name = "Imagem do Comprovante")]
+        public IFormFile? ProofImageFile { get; set; }
 
         public int CategoryId { get; set; }
         public string? CategoryName { get; set; }

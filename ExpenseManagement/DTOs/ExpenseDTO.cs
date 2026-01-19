@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+using ExpenseManagement.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace ExpenseManagement.DTOs
 {
@@ -31,15 +32,13 @@ namespace ExpenseManagement.DTOs
         public DateTime? Validity { get; set; }
 
         [Required(ErrorMessage = "O status é obrigatório.")]
-        [StringLength(20, ErrorMessage = "O status deve ter no máximo 20 caracteres.")]
-        public string? Status { get; set; }
+        [EnumDataType(typeof(ExpenseStatus), ErrorMessage = "O status informado é inválido.")]
+        public ExpenseStatus Status { get; set; }
 
         [StringLength(300, ErrorMessage = "A URL da imagem da nota deve ter no máximo 300 caracteres.")]
-        [Url(ErrorMessage = "A URL da imagem da nota deve ser uma URL válida.")]
         public string? NoteImageUrl { get; set; }
 
         [StringLength(300, ErrorMessage = "A URL da imagem do comprovante deve ter no máximo 300 caracteres.")]
-        [Url(ErrorMessage = "A URL da imagem do comprovante deve ser uma URL válida.")]
         public string? ProofImageUrl { get; set; }
 
         [Required(ErrorMessage = "A categoria é obrigatória.")]

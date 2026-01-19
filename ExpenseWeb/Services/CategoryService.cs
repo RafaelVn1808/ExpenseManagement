@@ -1,5 +1,7 @@
-﻿using ExpenseWeb.Models;
+using ExpenseWeb.Models;
 using ExpenseWeb.Services.Contracts;
+using System.Linq;
+using System.Text;
 using System.Text.Json;
 
 namespace ExpenseWeb.Services
@@ -15,7 +17,8 @@ namespace ExpenseWeb.Services
             _clientFactory = clientFactory;
             _options = new JsonSerializerOptions
             {
-                PropertyNameCaseInsensitive = true
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase // Usar camelCase na serialização
             };
         }
 
@@ -23,19 +26,107 @@ namespace ExpenseWeb.Services
         {
             var client = _clientFactory.CreateClient("ExpenseApi");
 
-            IEnumerable<CategoryViewModel> categories;
-
             var response = await client.GetAsync(apiEndpoint);
             if (response.IsSuccessStatusCode)
             {
                 var apiResponse = await response.Content.ReadAsStreamAsync();
-                categories = await JsonSerializer.DeserializeAsync<IEnumerable<CategoryViewModel>>(apiResponse, _options);
+                var categories = await JsonSerializer.DeserializeAsync<IEnumerable<CategoryViewModel>>(apiResponse, _options);
+                
+                // Retornar lista vazia se deserialização retornar null
+                return categories ?? Enumerable.Empty<CategoryViewModel>();
             }
-            else
+            
+            // Retornar lista vazia em caso de erro
+            return Enumerable.Empty<CategoryViewModel>();
+        }
+
+        public async Task<CategoryViewModel?> CreateCategory(CategoryViewModel category)
+        {
+            var client = _clientFactory.CreateClient("ExpenseApi");
+
+            // Mapear CategoryViewModel para CategoryDTO (formato esperado pela API)
+            // CategoryDTO requer apenas Name (CategoryId será gerado pela API)
+            var categoryDto = new
             {
-                return null;
+                Name = category.Name // O JsonNamingPolicy.CamelCase converterá para "name"
+            };
+
+            var jsonContent = JsonSerializer.Serialize(categoryDto);
+            System.Diagnostics.Debug.WriteLine($"Enviando para API: {jsonContent}");
+            
+            var content = new StringContent(
+                jsonContent,
+                Encoding.UTF8,
+                "application/json");
+
+            var response = await client.PostAsync(apiEndpoint, content);
+            System.Diagnostics.Debug.WriteLine($"Resposta da API: {response.StatusCode}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                // CreatedAtRouteResult retorna o objeto CategoryDTO no body
+                var responseContent = await response.Content.ReadAsStringAsync();
+                
+                // Tentar deserializar diretamente
+                var createdCategory = JsonSerializer.Deserialize<CategoryViewModel>(responseContent, _options);
+                
+                if (createdCategory != null)
+                {
+                    return createdCategory;
+                }
+                
+                // Se falhar, tentar deserializar como CategoryDTO e mapear
+                var categoryDtoResponse = JsonSerializer.Deserialize<CategoryApiDto>(responseContent, _options);
+                if (categoryDtoResponse != null)
+                {
+                    return new CategoryViewModel
+                    {
+                        CategoryId = categoryDtoResponse.CategoryId,
+                        Name = categoryDtoResponse.Name ?? string.Empty
+                    };
+                }
             }
-            return categories;
+            
+            // Log do erro para debug
+            var errorContent = await response.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"Erro ao criar categoria: {response.StatusCode} - {errorContent}");
+            
+            // Lançar exceção com detalhes do erro para melhor tratamento
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                throw new UnauthorizedAccessException("Não autorizado. Verifique se você está logado e se o token é válido.");
+            }
+            
+            if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+            {
+                throw new UnauthorizedAccessException("Acesso negado. Você precisa estar logado como administrador para criar categorias.");
+            }
+            
+            if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+            {
+                // Tentar extrair mensagens de validação
+                try
+                {
+                    var errorObj = JsonSerializer.Deserialize<Dictionary<string, object>>(errorContent, _options);
+                    var errorMessage = errorObj?.ContainsKey("title") == true 
+                        ? errorObj["title"]?.ToString() 
+                        : errorContent;
+                    throw new InvalidOperationException($"Erro de validação: {errorMessage}");
+                }
+                catch
+                {
+                    throw new InvalidOperationException($"Erro ao criar categoria: {errorContent}");
+                }
+            }
+            
+            throw new InvalidOperationException($"Erro ao criar categoria (Status: {response.StatusCode}): {errorContent}");
+        }
+        
+        // DTO auxiliar para deserialização da API
+        private class CategoryApiDto
+        {
+            public int CategoryId { get; set; }
+            public string? Name { get; set; }
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using ExpenseApi.Identity;
+using ExpenseApi.Identity;
 using ExpenseManagement.DTOs;
 using ExpenseManagement.Models;
 using ExpenseManagement.Services;
@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace ExpenseManagement.Controllers
 {
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class CategoryController : ControllerBase
@@ -49,6 +49,7 @@ namespace ExpenseManagement.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = Roles.Admin)]
         public async Task<ActionResult<CategoryDTO>> Post([FromBody] CategoryDTO categoryDTO)
         {
             if (categoryDTO == null)
@@ -67,6 +68,7 @@ namespace ExpenseManagement.Controllers
         }
 
         [HttpPut("{id:int}")]
+        [Authorize(Roles = Roles.Admin)] // Apenas Admin pode atualizar
         public async Task<ActionResult<CategoryDTO>> Put(int id, [FromBody] CategoryDTO categoryDTO)
         {
             if (categoryDTO == null || id != categoryDTO.CategoryId)
@@ -90,6 +92,7 @@ namespace ExpenseManagement.Controllers
         }
 
         [HttpDelete("{id:int}")]
+        [Authorize(Roles = Roles.Admin)] // Apenas Admin pode deletar
         public async Task<IActionResult> Delete(int id)
         {
             var categoryDTO = await _categoryService.GetCategoryById(id);

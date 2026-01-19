@@ -1,4 +1,4 @@
-﻿@model ExpenseWeb.Models.ExpenseViewModel
+@model ExpenseWeb.Models.ExpenseViewModel
 
 @{
     ViewData["Title"] = "Nova Despesa";
@@ -16,7 +16,7 @@
             </div>
 
             <div class="card-body p-4">
-                <form asp-action="CreateExpense">
+                <form asp-action="CreateExpense" enctype="multipart/form-data">
                     <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
                     <!-- Nome / Descrição -->
@@ -77,8 +77,18 @@
                             <label asp-for="Status" class="form-label fw-semibold text-secondary">Status</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-flag text-muted"></i></span>
-                                <input asp-for="Status" class="form-control border-start-0 ps-0" placeholder="Ex: Pendente, Pago" />
+                                <select asp-for="Status" class="form-select border-start-0 ps-0">
+                                    <option value="" selected disabled>Selecione um status...</option>
+                                    <option value="Pendente">Pendente</option>
+                                    <option value="Atrasado">Atrasado</option>
+                                    <option value="Pago">Pago</option>
+                                    <option value="Encerrada">Encerrada</option>
+                                </select>
                             </div>
+                            <small class="form-text text-muted">
+                                Pendente: antes do vencimento; Atrasado: após vencimento; Pago: parcela paga;
+                                Encerrada: despesa quitada.
+                            </small>
                             <span asp-validation-for="Status" class="text-danger text-sm"></span>
                         </div>
 
@@ -92,6 +102,59 @@
                                 </select>
                             </div>
                             <span asp-validation-for="CategoryId" class="text-danger text-sm"></span>
+                        </div>
+                    </div>
+
+                    <!-- Upload de Imagens -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="NoteImageFile" class="form-label fw-semibold text-secondary">
+                                <i class="bi bi-receipt me-1"></i>Imagem da Nota Fiscal
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="bi bi-image text-muted"></i>
+                                </span>
+                                <input asp-for="NoteImageFile" type="file" 
+                                       class="form-control border-start-0 ps-0" 
+                                       accept="image/*"
+                                       onchange="previewImage(this, 'notePreview')" />
+                            </div>
+                            <span asp-validation-for="NoteImageFile" class="text-danger text-sm"></span>
+                            <small class="form-text text-muted">
+                                Formatos aceitos: JPG, PNG, GIF, WEBP (máx. 5MB)
+                            </small>
+                            <div id="notePreview" class="mt-2" style="display: none;">
+                                <img id="notePreviewImg" src="" alt="Preview" class="img-thumbnail" style="max-height: 150px; max-width: 100%;" />
+                                <button type="button" class="btn btn-sm btn-outline-danger mt-2" onclick="removeImage('notePreview', 'NoteImageFile')">
+                                    <i class="bi bi-x-circle me-1"></i> Remover
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ProofImageFile" class="form-label fw-semibold text-secondary">
+                                <i class="bi bi-file-earmark-check me-1"></i>Imagem do Comprovante
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="bi bi-image text-muted"></i>
+                                </span>
+                                <input asp-for="ProofImageFile" type="file" 
+                                       class="form-control border-start-0 ps-0" 
+                                       accept="image/*"
+                                       onchange="previewImage(this, 'proofPreview')" />
+                            </div>
+                            <span asp-validation-for="ProofImageFile" class="text-danger text-sm"></span>
+                            <small class="form-text text-muted">
+                                Formatos aceitos: JPG, PNG, GIF, WEBP (máx. 5MB)
+                            </small>
+                            <div id="proofPreview" class="mt-2" style="display: none;">
+                                <img id="proofPreviewImg" src="" alt="Preview" class="img-thumbnail" style="max-height: 150px; max-width: 100%;" />
+                                <button type="button" class="btn btn-sm btn-outline-danger mt-2" onclick="removeImage('proofPreview', 'ProofImageFile')">
+                                    <i class="bi bi-x-circle me-1"></i> Remover
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -114,4 +177,26 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+    <script>
+        function previewImage(input, previewId) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                var previewDiv = document.getElementById(previewId);
+                var previewImg = document.getElementById(previewId + 'Img');
+
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewDiv.style.display = 'block';
+                };
+
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function removeImage(previewId, inputId) {
+            document.getElementById(previewId).style.display = 'none';
+            document.getElementById(previewId + 'Img').src = '';
+            document.getElementById(inputId).value = '';
+        }
+    </script>
 }

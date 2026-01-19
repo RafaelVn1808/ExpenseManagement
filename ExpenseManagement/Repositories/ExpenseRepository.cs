@@ -1,4 +1,5 @@
-﻿using ExpenseManagement.Context;
+using ExpenseManagement.Context;
+using ExpenseManagement.DTOs;
 using ExpenseManagement.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,6 +22,64 @@ namespace ExpenseManagement.Repositories
                 .ToListAsync();
         }
 
+        public async Task<PagedResult<Expense>> GetExpensesPaged(ExpenseQueryParameters parameters, string userId)
+        {
+            var query = _context.Expenses
+                .Include(c => c.Category)
+                .Where(e => e.UserId == userId);
+
+            if (parameters.From.HasValue)
+            {
+                query = query.Where(e => e.StartDate >= parameters.From.Value);
+            }
+
+            if (parameters.To.HasValue)
+            {
+                query = query.Where(e => e.StartDate <= parameters.To.Value);
+            }
+
+            if (parameters.CategoryId.HasValue)
+            {
+                query = query.Where(e => e.CategoryId == parameters.CategoryId.Value);
+            }
+
+            if (parameters.Status.HasValue)
+            {
+                query = query.Where(e => e.Status == parameters.Status.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(parameters.Search))
+            {
+                var search = parameters.Search.Trim();
+                query = query.Where(e => e.Name != null && EF.Functions.Like(e.Name, $"%{search}%"));
+            }
+
+            var sortBy = parameters.SortBy?.Trim().ToLower();
+            var sortAsc = string.Equals(parameters.SortDir, "asc", StringComparison.OrdinalIgnoreCase);
+
+            query = sortBy switch
+            {
+                "name" => sortAsc ? query.OrderBy(e => e.Name) : query.OrderByDescending(e => e.Name),
+                "totalamount" => sortAsc ? query.OrderBy(e => e.TotalAmount) : query.OrderByDescending(e => e.TotalAmount),
+                "status" => sortAsc ? query.OrderBy(e => e.Status) : query.OrderByDescending(e => e.Status),
+                "category" => sortAsc ? query.OrderBy(e => e.Category!.Name) : query.OrderByDescending(e => e.Category!.Name),
+                "validity" => sortAsc ? query.OrderBy(e => e.Validity) : query.OrderByDescending(e => e.Validity),
+                _ => sortAsc ? query.OrderBy(e => e.StartDate) : query.OrderByDescending(e => e.StartDate)
+            };
+
+            var totalCount = await query.CountAsync();
+            var skip = (parameters.Page - 1) * parameters.PageSize;
+            var items = await query.Skip(skip).Take(parameters.PageSize).ToListAsync();
+
+            return new PagedResult<Expense>
+            {
+                Page = parameters.Page,
+                PageSize = parameters.PageSize,
+                TotalCount = totalCount,
+                Items = items
+            };
+        }
+
         public async Task<Expense?> GetExpenseId(int expenseId, string userId)
         {
             return await _context.Expenses
@@ -41,7 +100,7 @@ namespace ExpenseManagement.Repositories
             return expense;
         }
 
-        public async Task<Expense >Update(Expense expense)
+        public async Task<Expense> Update(Expense expense)
         {
             if (expense == null)
             {

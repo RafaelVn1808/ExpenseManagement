@@ -6,6 +6,7 @@ using ExpenseManagement.Models;
 using ExpenseManagement.Repositories;
 using ExpenseManagement.Services;
 using FluentAssertions;
+using Microsoft.Extensions.Caching.Memory;
 using Moq;
 using Xunit;
 
@@ -15,6 +16,7 @@ namespace ExpenseManagement.Tests.Services
     {
         private readonly Mock<ICategoryRepository> _categoryRepositoryMock;
         private readonly IMapper _mapper;
+        private readonly IMemoryCache _memoryCache;
         private readonly CategoryService _categoryService;
 
         public CategoryServiceTests()
@@ -25,7 +27,8 @@ namespace ExpenseManagement.Tests.Services
             var config = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>());
             _mapper = config.CreateMapper();
 
-            _categoryService = new CategoryService(_categoryRepositoryMock.Object, _mapper);
+            _memoryCache = new MemoryCache(new MemoryCacheOptions());
+            _categoryService = new CategoryService(_categoryRepositoryMock.Object, _mapper, _memoryCache);
         }
 
         [Fact]

@@ -1,6 +1,5 @@
-﻿using ExpenseWeb.Services.Contracts;
-using Microsoft.Extensions.Configuration;
-using System.Net.Http.Headers;
+using ExpenseWeb.Models;
+using ExpenseWeb.Services.Contracts;
 using System.Text;
 using System.Text.Json;
 
@@ -9,17 +8,14 @@ namespace ExpenseWeb.Services
     public class AuthService : IAuthService
     {
         private readonly IHttpClientFactory _httpClientFactory;
-        private readonly IConfiguration _configuration;
 
         public AuthService(
-            IHttpClientFactory httpClientFactory,
-            IConfiguration configuration)
+            IHttpClientFactory httpClientFactory)
         {
             _httpClientFactory = httpClientFactory;
-            _configuration = configuration;
         }
 
-        public async Task<string?> LoginAsync(string email, string password)
+        public async Task<LoginResponse?> LoginAsync(string email, string password)
         {
             var client = _httpClientFactory.CreateClient("ExpenseApi");
 
@@ -40,13 +36,7 @@ namespace ExpenseWeb.Services
                 return null;
 
             var json = await response.Content.ReadAsStringAsync();
-
-            using var document = JsonDocument.Parse(json);
-
-            return document
-                .RootElement
-                .GetProperty("token")
-                .GetString();
+            return JsonSerializer.Deserialize<LoginResponse>(json);
         }
 
         public async Task<bool> RegisterAsync(string email, string password)

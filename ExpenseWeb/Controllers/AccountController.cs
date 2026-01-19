@@ -1,4 +1,4 @@
-﻿using ExpenseWeb.Models;
+using ExpenseWeb.Models;
 using ExpenseWeb.Services.Contracts;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -29,15 +29,17 @@ namespace ExpenseWeb.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            var token = await _authService.LoginAsync(model.Email, model.Password);
+            var loginResponse = await _authService.LoginAsync(model.Email, model.Password);
 
-            if (string.IsNullOrEmpty(token))
+            if (loginResponse == null || string.IsNullOrEmpty(loginResponse.Token))
             {
                 ModelState.AddModelError("", "Email ou senha inválidos");
                 return View(model);
             }
 
-            HttpContext.Session.SetString("JWToken", token);
+            HttpContext.Session.SetString("JWToken", loginResponse.Token);
+            HttpContext.Session.SetString("RefreshToken", loginResponse.RefreshToken);
+            HttpContext.Session.SetString("JwtExpiresAt", loginResponse.ExpiresAt.ToUniversalTime().ToString("O"));
 
             // Criar claims do usuário para autenticação
             var claims = new List<System.Security.Claims.Claim>
