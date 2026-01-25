@@ -3,6 +3,9 @@ using ExpenseWeb.Services.Contracts;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Linq;
 
 namespace ExpenseWeb.Controllers
 {
@@ -41,14 +44,23 @@ namespace ExpenseWeb.Controllers
             HttpContext.Session.SetString("RefreshToken", loginResponse.RefreshToken);
             HttpContext.Session.SetString("JwtExpiresAt", loginResponse.ExpiresAt.ToUniversalTime().ToString("O"));
 
-            // Criar claims do usuário para autenticação
-            var claims = new List<System.Security.Claims.Claim>
+            // Criar claims do usuário para autenticação (inclui roles do JWT)
+            var claims = new List<Claim>
             {
-                new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Email, model.Email)
+                new Claim(ClaimTypes.Email, model.Email)
             };
 
-            var claimsIdentity = new System.Security.Claims.ClaimsIdentity(claims, "CookieAuth");
-            await HttpContext.SignInAsync("Cookies", new System.Security.Claims.ClaimsPrincipal(claimsIdentity));
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var jwt = tokenHandler.ReadJwtToken(loginResponse.Token);
+            claims.AddRange(jwt.Claims
+                .Where(c => c.Type == ClaimTypes.Role)
+                .Select(c => new Claim(ClaimTypes.Role, c.Value)));
+            claims.AddRange(jwt.Claims
+                .Where(c => c.Type == ClaimTypes.NameIdentifier)
+                .Select(c => new Claim(ClaimTypes.NameIdentifier, c.Value)));
+
+            var claimsIdentity = new ClaimsIdentity(claims, "CookieAuth");
+            await HttpContext.SignInAsync("Cookies", new ClaimsPrincipal(claimsIdentity));
 
             return RedirectToAction("Index", "Expense");
         }

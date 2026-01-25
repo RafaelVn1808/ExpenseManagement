@@ -107,7 +107,13 @@ namespace ExpenseManagement.Repositories
                 throw new ArgumentNullException(nameof(expense));
             }
 
-            _context.Entry(expense).State = EntityState.Modified;
+            var entry = _context.Entry(expense);
+            if (entry.State == EntityState.Detached)
+            {
+                _context.Attach(expense);
+                entry = _context.Entry(expense);
+            }
+            entry.State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return expense;
         }

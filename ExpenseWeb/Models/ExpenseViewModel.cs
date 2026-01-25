@@ -34,6 +34,10 @@ namespace ExpenseWeb.Models
         [Display(Name = "Imagem do Comprovante")]
         public IFormFile? ProofImageFile { get; set; }
 
+        // Remoção de imagens no update
+        public bool RemoveNoteImage { get; set; }
+        public bool RemoveProofImage { get; set; }
+
         public int CategoryId { get; set; }
         public string? CategoryName { get; set; }
 

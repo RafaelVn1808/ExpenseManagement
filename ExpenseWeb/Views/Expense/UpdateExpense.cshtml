@@ -125,6 +125,12 @@
                                 <div class="mb-2">
                                     <p class="text-muted small mb-1">Imagem atual:</p>
                                     <img src="@Model.NoteImageUrl" alt="Nota Fiscal" class="img-thumbnail" style="max-height: 150px; max-width: 100%;" />
+                                    <div class="form-check mt-2">
+                                        <input asp-for="RemoveNoteImage" class="form-check-input" type="checkbox" />
+                                        <label asp-for="RemoveNoteImage" class="form-check-label">
+                                            Remover imagem atual
+                                        </label>
+                                    </div>
                                 </div>
                             }
                             
@@ -160,6 +166,12 @@
                                 <div class="mb-2">
                                     <p class="text-muted small mb-1">Imagem atual:</p>
                                     <img src="@Model.ProofImageUrl" alt="Comprovante" class="img-thumbnail" style="max-height: 150px; max-width: 100%;" />
+                                    <div class="form-check mt-2">
+                                        <input asp-for="RemoveProofImage" class="form-check-input" type="checkbox" />
+                                        <label asp-for="RemoveProofImage" class="form-check-label">
+                                            Remover imagem atual
+                                        </label>
+                                    </div>
                                 </div>
                             }
                             

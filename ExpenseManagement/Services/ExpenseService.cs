@@ -94,10 +94,10 @@ namespace ExpenseManagement.Services
             expenseDto.InstallmentAmount =
                 Math.Round(expenseDto.TotalAmount / expenseDto.Installments, 2);
 
-            var expenseEntity = _mapper.Map<Expense>(expenseDto);
-            expenseEntity.UserId = userId; // Garantir que o userId não seja alterado
+            _mapper.Map(expenseDto, existingExpense);
+            existingExpense.UserId = userId; // Garantir que o userId não seja alterado
 
-            await _expenseRepository.Update(expenseEntity);
+            await _expenseRepository.Update(existingExpense);
         }
 
         public async Task<ExpenseDTO?> DeleteExpenseAsync(int id, string userId)
