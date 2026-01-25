@@ -1,0 +1,61 @@
+@model IReadOnlyList<ExpenseWeb.Models.AdminUserViewModel>
+
+@{
+    ViewData["Title"] = "Permissões";
+}
+
+<div class="container">
+    <h2 class="mb-4">Permissões de Usuários</h2>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+    }
+
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Email</th>
+                    <th>Admin</th>
+                    <th>User</th>
+                    <th>Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Count == 0)
+            {
+                <tr>
+                    <td colspan="4" class="text-center">Nenhum usuário encontrado.</td>
+                </tr>
+            }
+            else
+            {
+                foreach (var user in Model)
+                {
+                    <tr>
+                        <td>@user.Email</td>
+                        <td>
+                            <input form="roles-@user.Id" type="checkbox" name="Roles" value="Admin" @(user.IsAdmin ? "checked" : "") />
+                        </td>
+                        <td>
+                            <input form="roles-@user.Id" type="checkbox" name="Roles" value="User" @(user.IsUser ? "checked" : "") />
+                        </td>
+                        <td>
+                            <form id="roles-@user.Id" asp-action="UpdateRoles" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="UserId" value="@user.Id" />
+                                <button type="submit" class="btn btn-sm btn-primary">Salvar</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

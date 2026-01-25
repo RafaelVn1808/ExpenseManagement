@@ -6,6 +6,7 @@ using ExpenseManagement.Context;
 using ExpenseManagement.Repositories;
 using ExpenseManagement.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -62,6 +63,13 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
 });
 
 // CORS Configuration
@@ -123,6 +131,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.AddHealthChecks();
 
 
 
@@ -130,6 +139,7 @@ var app = builder.Build();
 
 app.UseMiddleware<ExceptionMiddleware>();
 // Configure the HTTP request pipeline.
+app.UseForwardedHeaders();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -153,11 +163,12 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    await IdentitySeed.SeedAsync(services);
+    await IdentitySeed.SeedAsync(services, app.Configuration, app.Environment);
 }
 
 

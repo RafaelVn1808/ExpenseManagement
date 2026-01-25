@@ -31,5 +31,40 @@ namespace ExpenseManagement.Services
 
             return $"/uploads/expenses/{fileName}";
         }
+
+        public Task DeleteExpenseImageAsync(string imageUrl)
+        {
+            if (string.IsNullOrWhiteSpace(imageUrl))
+            {
+                return Task.CompletedTask;
+            }
+
+            string relativePath;
+            if (Uri.TryCreate(imageUrl, UriKind.Absolute, out var uri))
+            {
+                relativePath = uri.AbsolutePath;
+            }
+            else
+            {
+                relativePath = imageUrl;
+            }
+
+            if (!relativePath.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase))
+            {
+                return Task.CompletedTask;
+            }
+
+            var webRoot = _environment.WebRootPath
+                ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            var normalizedPath = relativePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar);
+            var filePath = Path.Combine(webRoot, normalizedPath);
+
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
+
+            return Task.CompletedTask;
+        }
     }
 }

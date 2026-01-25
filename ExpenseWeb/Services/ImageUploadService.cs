@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Text.Json;
 
 namespace ExpenseWeb.Services
@@ -31,7 +32,9 @@ namespace ExpenseWeb.Services
 
             using var content = new MultipartFormDataContent();
             using var stream = file.OpenReadStream();
-            content.Add(new StreamContent(stream), "file", file.FileName);
+            var streamContent = new StreamContent(stream);
+            streamContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+            content.Add(streamContent, "file", file.FileName);
 
             var client = _httpClientFactory.CreateClient("ExpenseApi");
             var response = await client.PostAsync("/api/expense/upload", content);
@@ -47,9 +50,26 @@ namespace ExpenseWeb.Services
             return document.RootElement.GetProperty("url").GetString();
         }
 
-        public void DeleteImage(string? imageUrl)
+        public async Task DeleteImageAsync(string? imageUrl)
         {
-            // Upload agora é feito via API; não há endpoint de exclusão.
+            if (string.IsNullOrWhiteSpace(imageUrl))
+            {
+                return;
+            }
+
+            var client = _httpClientFactory.CreateClient("ExpenseApi");
+            var payload = new { url = imageUrl };
+            var content = new StringContent(
+                JsonSerializer.Serialize(payload),
+                System.Text.Encoding.UTF8,
+                "application/json");
+
+            var response = await client.PostAsync("/api/expense/delete-image", content);
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new InvalidOperationException($"Falha ao excluir imagem: {response.StatusCode} - {error}");
+            }
         }
     }
 }

@@ -194,9 +194,17 @@ namespace ExpenseWeb.Controllers
                     // Deletar imagem antiga se existir
                     if (!string.IsNullOrEmpty(existingExpense?.NoteImageUrl))
                     {
-                        _imageUploadService.DeleteImage(existingExpense.NoteImageUrl);
+                        await _imageUploadService.DeleteImageAsync(existingExpense.NoteImageUrl);
                     }
                     expense.NoteImageUrl = await _imageUploadService.UploadImageAsync(expense.NoteImageFile, "note");
+                }
+                else if (expense.RemoveNoteImage)
+                {
+                    if (!string.IsNullOrEmpty(existingExpense?.NoteImageUrl))
+                    {
+                        await _imageUploadService.DeleteImageAsync(existingExpense.NoteImageUrl);
+                    }
+                    expense.NoteImageUrl = null;
                 }
 
                 if (expense.ProofImageFile != null)
@@ -204,9 +212,17 @@ namespace ExpenseWeb.Controllers
                     // Deletar imagem antiga se existir
                     if (!string.IsNullOrEmpty(existingExpense?.ProofImageUrl))
                     {
-                        _imageUploadService.DeleteImage(existingExpense.ProofImageUrl);
+                        await _imageUploadService.DeleteImageAsync(existingExpense.ProofImageUrl);
                     }
                     expense.ProofImageUrl = await _imageUploadService.UploadImageAsync(expense.ProofImageFile, "proof");
+                }
+                else if (expense.RemoveProofImage)
+                {
+                    if (!string.IsNullOrEmpty(existingExpense?.ProofImageUrl))
+                    {
+                        await _imageUploadService.DeleteImageAsync(existingExpense.ProofImageUrl);
+                    }
+                    expense.ProofImageUrl = null;
                 }
             }
             catch (Exception ex)

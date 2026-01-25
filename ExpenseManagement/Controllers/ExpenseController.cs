@@ -21,15 +21,18 @@ namespace ExpenseManagement.Controllers
         private readonly IExpenseService _service;
         private readonly IImageUploadService _imageUploadService;
         private readonly ILogger<ExpenseController> _logger;
+        private readonly IConfiguration _configuration;
 
         public ExpenseController(
             IExpenseService service,
             IImageUploadService imageUploadService,
-            ILogger<ExpenseController> logger)
+            ILogger<ExpenseController> logger,
+            IConfiguration configuration)
         {
             _service = service;
             _imageUploadService = imageUploadService;
             _logger = logger;
+            _configuration = configuration;
         }
 
         // Helper method para obter o UserId do token JWT
@@ -82,9 +85,30 @@ namespace ExpenseManagement.Controllers
             }
 
             var relativeUrl = await _imageUploadService.SaveExpenseImageAsync(file);
-            var absoluteUrl = $"{Request.Scheme}://{Request.Host}{relativeUrl}";
+            var baseUrl = _configuration["PublicBaseUrl"];
+            if (string.IsNullOrWhiteSpace(baseUrl))
+            {
+                baseUrl = $"{Request.Scheme}://{Request.Host}";
+            }
+            else
+            {
+                baseUrl = baseUrl.TrimEnd('/');
+            }
+            var absoluteUrl = $"{baseUrl}{relativeUrl}";
 
             return Ok(new { url = absoluteUrl });
+        }
+
+        [HttpPost("delete-image")]
+        public async Task<IActionResult> DeleteImage([FromBody] DeleteImageRequestDto request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.Url))
+            {
+                return BadRequest("URL inválida.");
+            }
+
+            await _imageUploadService.DeleteExpenseImageAsync(request.Url);
+            return Ok();
         }
 
         [HttpPost]
