@@ -1,6 +1,24 @@
 # Expense Management
 
-Projeto com API ASP.NET Core (`ExpenseManagement`) e Web MVC (`ExpenseWeb`) para gerenciamento de despesas.
+Projeto fullstack para gestão de despesas com API ASP.NET Core (`ExpenseManagement`) e Web MVC (`ExpenseWeb`).
+
+## Visão geral
+Aplicação para controle de despesas com autenticação, autorização por roles, CRUD avançado, filtros/paginação e upload de comprovantes. Pensada para simular um cenário corporativo real.
+
+## Funcionalidades
+- Autenticação e renovação de token (JWT + refresh)
+- CRUD completo de despesas
+- Filtros, paginação e ordenação
+- Upload de comprovantes (imagens)
+- Gestão de categorias
+- Controle de acesso por roles (Admin/User)
+
+## Stack
+- .NET 10, ASP.NET Core Web API, ASP.NET Core MVC
+- EF Core, AutoMapper, ASP.NET Identity
+- SQL Server
+- xUnit, Moq
+- Docker, Docker Compose
 
 ## Requisitos
 - .NET SDK 10
@@ -23,7 +41,6 @@ dotnet run --project ExpenseWeb/ExpenseWeb.csproj
 ```
 
 ## Migrações
-Para aplicar migrações do banco:
 ```
 dotnet ef database update --project ExpenseManagement/ExpenseApi.csproj
 ```
@@ -31,7 +48,7 @@ dotnet ef database update --project ExpenseManagement/ExpenseApi.csproj
 ## Autenticação
 - `POST /api/auth/register` registra usuário.
 - `POST /api/auth/login` retorna `token`, `refreshToken` e `expiresAt`.
-- `POST /api/auth/refresh` renova o token com refresh token válido.
+- `POST /api/auth/refresh` renova o token.
 
 ## Endpoints principais
 - `GET /api/expense` (paginado e filtrável)
@@ -39,7 +56,7 @@ dotnet ef database update --project ExpenseManagement/ExpenseApi.csproj
 - `POST /api/expense`
 - `PUT /api/expense/{id}`
 - `DELETE /api/expense/{id}`
-- `POST /api/expense/upload` (upload de imagens)
+- `POST /api/expense/upload`
 - `GET /api/category`
 
 ## Upload de imagens
