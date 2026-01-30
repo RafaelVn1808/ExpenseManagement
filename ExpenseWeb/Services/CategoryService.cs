@@ -10,7 +10,7 @@ namespace ExpenseWeb.Services
     {
         private readonly IHttpClientFactory _clientFactory;
         private readonly JsonSerializerOptions _options;
-        private const string apiEndpoint = "/api/category/";
+        private const string apiEndpoint = "/api/category";
 
         public CategoryService(IHttpClientFactory clientFactory)
         {
@@ -99,7 +99,7 @@ namespace ExpenseWeb.Services
             
             if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
             {
-                throw new UnauthorizedAccessException("Acesso negado. Você precisa estar logado como administrador para criar categorias.");
+                throw new UnauthorizedAccessException("Acesso negado. Verifique se está logado e tente novamente.");
             }
             
             if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)

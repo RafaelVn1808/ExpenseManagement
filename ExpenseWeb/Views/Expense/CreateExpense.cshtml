@@ -96,10 +96,12 @@
                             <label asp-for="CategoryId" class="form-label fw-semibold text-secondary">Categoria</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-tag text-muted"></i></span>
-                                <!-- ViewBag.CategoryId vem do Controller CreateExpense -->
-                                <select asp-for="CategoryId" class="form-select border-start-0 ps-0" asp-items="ViewBag.CategoryId">
+                                <select asp-for="CategoryId" id="CategoryId" class="form-select border-start-0 ps-0" asp-items="ViewBag.CategoryId">
                                     <option value="" selected disabled>Selecione uma categoria...</option>
                                 </select>
+                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#novaCategoriaModal" title="Nova categoria">
+                                    <i class="bi bi-plus-lg"></i>
+                                </button>
                             </div>
                             <span asp-validation-for="CategoryId" class="text-danger text-sm"></span>
                         </div>
@@ -173,6 +175,31 @@
     </div>
 </div>
 
+<!-- Modal Nova Categoria -->
+<div class="modal fade" id="novaCategoriaModal" tabindex="-1" aria-labelledby="novaCategoriaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="novaCategoriaModalLabel"><i class="bi bi-tag me-2"></i>Nova Categoria</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">
+                    <label for="novaCategoriaNome" class="form-label">Nome</label>
+                    <input type="text" id="novaCategoriaNome" class="form-control" placeholder="Ex: Alimentação, Transporte..." maxlength="100" />
+                    <div id="novaCategoriaErro" class="text-danger small mt-1" style="display: none;"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnSalvarCategoria">
+                    <i class="bi bi-check-lg me-1"></i>Salvar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
@@ -198,5 +225,44 @@
             document.getElementById(previewId + 'Img').src = '';
             document.getElementById(inputId).value = '';
         }
+
+        // Nova categoria (modal)
+        document.getElementById('btnSalvarCategoria').addEventListener('click', function () {
+            var nome = document.getElementById('novaCategoriaNome').value.trim();
+            var erroEl = document.getElementById('novaCategoriaErro');
+            erroEl.style.display = 'none';
+            if (!nome) {
+                erroEl.textContent = 'Informe o nome da categoria.';
+                erroEl.style.display = 'block';
+                return;
+            }
+            var btn = this;
+            btn.disabled = true;
+            fetch('@Url.Action("CreateAjax", "Category")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: nome }),
+                credentials: 'same-origin'
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    var sel = document.getElementById('CategoryId');
+                    var opt = new Option(data.name, data.categoryId, true, true);
+                    sel.add(opt);
+                    var modal = bootstrap.Modal.getInstance(document.getElementById('novaCategoriaModal'));
+                    if (modal) modal.hide();
+                    document.getElementById('novaCategoriaNome').value = '';
+                } else {
+                    erroEl.textContent = data.message || 'Erro ao criar categoria.';
+                    erroEl.style.display = 'block';
+                }
+            })
+            .catch(function () {
+                erroEl.textContent = 'Erro de conexão. Tente novamente.';
+                erroEl.style.display = 'block';
+            })
+            .finally(function () { btn.disabled = false; });
+        });
     </script>
 }

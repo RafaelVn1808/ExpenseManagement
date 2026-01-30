@@ -38,7 +38,7 @@ namespace ExpenseWeb.Controllers
 
                 if (result is null)
                 {
-                    ModelState.AddModelError("", "Erro ao criar categoria. Verifique se você está logado como administrador e tente novamente.");
+                    ModelState.AddModelError("", "Erro ao criar categoria. Verifique se está logado e se a API está acessível e tente novamente.");
                     return View(category);
                 }
 
@@ -60,7 +60,32 @@ namespace ExpenseWeb.Controllers
                 ModelState.AddModelError("", $"Erro ao criar categoria: {ex.Message}");
                 return View(category);
             }
+        }
 
+        /// <summary>
+        /// Cria categoria via AJAX (ex.: modal na tela de Nova Despesa). Retorna JSON com id e nome.
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> CreateAjax([FromBody] CategoryViewModel category)
+        {
+            if (category == null || string.IsNullOrWhiteSpace(category.Name))
+            {
+                return Json(new { success = false, message = "Nome da categoria é obrigatório." });
+            }
+
+            try
+            {
+                var result = await _categoryService.CreateCategory(category);
+                if (result is null)
+                {
+                    return Json(new { success = false, message = "Erro ao criar categoria." });
+                }
+                return Json(new { success = true, categoryId = result.CategoryId, name = result.Name });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
     }
 }

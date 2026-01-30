@@ -18,8 +18,21 @@ namespace ExpenseWeb.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            var users = await _adminService.GetUsersAsync();
-            return View(users);
+            try
+            {
+                var users = await _adminService.GetUsersAsync();
+                return View(users);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+                return View(new List<AdminUserViewModel>());
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Erro ao carregar usuários: " + ex.Message;
+                return View(new List<AdminUserViewModel>());
+            }
         }
 
         [HttpPost]

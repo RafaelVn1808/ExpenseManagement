@@ -48,8 +48,8 @@ namespace ExpenseManagement.Controllers
             return Ok(categoryDTO);
         }
 
+        /// <summary>Cria categoria. Qualquer usuário autenticado pode criar.</summary>
         [HttpPost]
-        [Authorize(Roles = Roles.Admin)]
         public async Task<ActionResult<CategoryDTO>> Post([FromBody] CategoryDTO categoryDTO)
         {
             if (categoryDTO == null)
