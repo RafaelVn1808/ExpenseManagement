@@ -1,10 +1,14 @@
 @model ExpenseWeb.Models.PagedResult<ExpenseWeb.Models.ExpenseViewModel>
-
 @{
     ViewData["Title"] = "Despesas";
 
     int selectedMonth = ViewBag.SelectedMonth ?? DateTime.Now.Month;
     int selectedYear = ViewBag.SelectedYear ?? DateTime.Now.Year;
+    int pageSize = ViewBag.PageSize ?? 20;
+    int? filterCategoryId = ViewBag.CategoryId;
+    string? filterStatus = ViewBag.Status;
+    string? filterSearch = ViewBag.Search;
+    var categories = ViewBag.Categories as IEnumerable<ExpenseWeb.Models.CategoryViewModel> ?? Enumerable.Empty<ExpenseWeb.Models.CategoryViewModel>();
     
     var items = Model?.Items ?? Enumerable.Empty<ExpenseWeb.Models.ExpenseViewModel>();
     // Total do mês: à vista = valor total; parcelada = só o valor da parcela daquele mês
@@ -44,58 +48,70 @@
 <!-- Card de Filtros -->
 <div class="card shadow-sm mb-4">
     <div class="card-body">
-        <form method="get" asp-action="Index" class="row g-3 align-items-end">
+        <form method="get" asp-action="Index" id="filterForm" class="row g-3 align-items-end">
             <input type="hidden" name="page" value="1" />
-            <input type="hidden" name="pageSize" value="@(ViewBag.PageSize ?? 20)" />
-            <div class="col-md-3">
-                <label class="form-label fw-semibold">
-                    <i class="bi bi-calendar3 me-1"></i>Mês
-                </label>
+            <input type="hidden" name="pageSize" id="pageSizeInput" value="@pageSize" />
+            <div class="col-md-2">
+                <label class="form-label fw-semibold"><i class="bi bi-calendar3 me-1"></i>Mês</label>
                 <select name="month" class="form-select">
                     @for (int m = 1; m <= 12; m++)
                     {
-                        @if (m == selectedMonth)
-                        {
-                            <option value="@m" selected>
-                                @(System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m))
-                            </option>
-                        }
-                        else
-                        {
-                            <option value="@m">
-                                @(System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m))
-                            </option>
-                        }
+                        <option value="@m" selected="@(m == selectedMonth)">@(System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m))</option>
                     }
                 </select>
             </div>
-
-            <div class="col-md-3">
-                <label class="form-label fw-semibold">
-                    <i class="bi bi-calendar-year me-1"></i>Ano
-                </label>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold"><i class="bi bi-calendar-year me-1"></i>Ano</label>
                 <select name="year" class="form-select">
                     @for (int y = DateTime.Now.Year - 5; y <= DateTime.Now.Year + 1; y++)
                     {
-                        @if (y == selectedYear)
-                        {
-                            <option value="@y" selected>@y</option>
-                        }
-                        else
-                        {
-                            <option value="@y">@y</option>
-                        }
+                        <option value="@y" selected="@(y == selectedYear)">@y</option>
                     }
                 </select>
             </div>
-
-            <div class="col-md-6 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-funnel me-1"></i> Filtrar
-                </button>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold"><i class="bi bi-tag me-1"></i>Categoria</label>
+                <select name="categoryId" class="form-select">
+                    <option value="">Todas</option>
+                    @foreach (var c in categories)
+                    {
+                        <option value="@c.CategoryId" selected="@(filterCategoryId == c.CategoryId)">@c.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold"><i class="bi bi-flag me-1"></i>Status</label>
+                <select name="status" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="Pendente" selected="@(filterStatus == "Pendente")">Pendente</option>
+                    <option value="Atrasado" selected="@(filterStatus == "Atrasado")">Atrasado</option>
+                    <option value="Pago" selected="@(filterStatus == "Pago")">Pago</option>
+                    <option value="Encerrada" selected="@(filterStatus == "Encerrada")">Encerrada</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold"><i class="bi bi-search me-1"></i>Busca</label>
+                <input type="text" name="search" class="form-control" placeholder="Nome da despesa" value="@filterSearch" />
+            </div>
+            <div class="col-md-2 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-funnel me-1"></i> Filtrar</button>
+            </div>
+            <div class="col-12 col-md-auto ms-md-auto">
+                <label class="form-label fw-semibold"><i class="bi bi-list me-1"></i>Itens por página</label>
+                <select id="pageSizeSelect" class="form-select" style="width: auto;">
+                    <option value="10" selected="@(pageSize == 10)">10</option>
+                    <option value="20" selected="@(pageSize == 20)">20</option>
+                    <option value="50" selected="@(pageSize == 50)">50</option>
+                </select>
             </div>
         </form>
     </div>
+</div>
+
+<div class="mb-2">
+    <a asp-action="ExportCsv" asp-route-month="@selectedMonth" asp-route-year="@selectedYear" asp-route-categoryId="@filterCategoryId" asp-route-status="@filterStatus" asp-route-search="@filterSearch" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Exportar CSV
+    </a>
 </div>
 
 <!-- Cards de Resumo (apenas se houver despesas) -->
@@ -293,12 +309,10 @@
                                            title="Editar">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <a asp-action="DeleteExpense"
-                                           asp-route-id="@item.ExpenseId"
-                                           class="btn btn-outline-danger"
-                                           title="Excluir">
+                                        <button type="button" class="btn btn-outline-danger btn-delete-expense" title="Excluir"
+                                                data-expense-id="@item.ExpenseId" data-expense-name="@item.Name" data-expense-amount="@item.Amount.ToString("F2")">
                                             <i class="bi bi-trash"></i>
-                                        </a>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -320,10 +334,9 @@
             }
             <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
                 <a class="page-link" asp-action="Index"
-                   asp-route-month="@selectedMonth"
-                   asp-route-year="@selectedYear"
-                   asp-route-page="@(currentPage - 1)"
-                   asp-route-pageSize="@(ViewBag.PageSize ?? 20)">
+                   asp-route-month="@selectedMonth" asp-route-year="@selectedYear"
+                   asp-route-page="@(currentPage - 1)" asp-route-pageSize="@pageSize"
+                   asp-route-categoryId="@filterCategoryId" asp-route-status="@filterStatus" asp-route-search="@filterSearch">
                     Anterior
                 </a>
             </li>
@@ -331,20 +344,18 @@
             {
                 <li class="page-item @(p == currentPage ? "active" : "")">
                     <a class="page-link" asp-action="Index"
-                       asp-route-month="@selectedMonth"
-                       asp-route-year="@selectedYear"
-                       asp-route-page="@p"
-                       asp-route-pageSize="@(ViewBag.PageSize ?? 20)">
+                       asp-route-month="@selectedMonth" asp-route-year="@selectedYear"
+                       asp-route-page="@p" asp-route-pageSize="@pageSize"
+                       asp-route-categoryId="@filterCategoryId" asp-route-status="@filterStatus" asp-route-search="@filterSearch">
                         @p
                     </a>
                 </li>
             }
             <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
                 <a class="page-link" asp-action="Index"
-                   asp-route-month="@selectedMonth"
-                   asp-route-year="@selectedYear"
-                   asp-route-page="@(currentPage + 1)"
-                   asp-route-pageSize="@(ViewBag.PageSize ?? 20)">
+                   asp-route-month="@selectedMonth" asp-route-year="@selectedYear"
+                   asp-route-page="@(currentPage + 1)" asp-route-pageSize="@pageSize"
+                   asp-route-categoryId="@filterCategoryId" asp-route-status="@filterStatus" asp-route-search="@filterSearch">
                     Próxima
                 </a>
             </li>
@@ -367,6 +378,30 @@
     }
 }
 
+<!-- Modal Confirmar Exclusão de Despesa -->
+<div class="modal fade" id="deleteExpenseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger bg-opacity-10">
+                <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Excluir despesa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir a despesa <strong id="deleteExpenseName"></strong> (R$ <span id="deleteExpenseAmount"></span>)?</p>
+                <p class="text-muted small mb-0">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteExpenseForm" method="post" asp-action="DeleteExpenseConfirmed" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="expenseId" id="deleteExpenseIdInput" />
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i> Sim, excluir</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -384,6 +419,35 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            var pageSizeSelect = document.getElementById('pageSizeSelect');
+            var pageSizeInput = document.getElementById('pageSizeInput');
+            var filterForm = document.getElementById('filterForm');
+            if (pageSizeSelect && pageSizeInput) {
+                var saved = localStorage.getItem('expensePageSize');
+                if (saved) {
+                    pageSizeSelect.value = saved;
+                    pageSizeInput.value = saved;
+                }
+                pageSizeSelect.addEventListener('change', function() {
+                    var v = this.value;
+                    pageSizeInput.value = v;
+                    localStorage.setItem('expensePageSize', v);
+                    filterForm.submit();
+                });
+            }
+
+            document.querySelectorAll('.btn-delete-expense').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var id = this.getAttribute('data-expense-id');
+                    var name = this.getAttribute('data-expense-name');
+                    var amount = this.getAttribute('data-expense-amount');
+                    document.getElementById('deleteExpenseIdInput').value = id;
+                    document.getElementById('deleteExpenseName').textContent = name || '';
+                    document.getElementById('deleteExpenseAmount').textContent = amount || '';
+                    new bootstrap.Modal(document.getElementById('deleteExpenseModal')).show();
+                });
+            });
+
             var imagePreviewModal = document.getElementById('imagePreviewModal');
             if (imagePreviewModal) {
                 imagePreviewModal.addEventListener('show.bs.modal', function (event) {

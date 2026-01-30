@@ -9,7 +9,6 @@ using System.Linq;
 
 namespace ExpenseWeb.Controllers
 {
-    [AllowAnonymous]
     public class AccountController : Controller
     {
         private readonly IAuthService _authService;
@@ -19,12 +18,14 @@ namespace ExpenseWeb.Controllers
             _authService = authService;
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public IActionResult Login()
         {
             return View();
         }
 
+        [AllowAnonymous]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
@@ -65,12 +66,14 @@ namespace ExpenseWeb.Controllers
             return RedirectToAction("Index", "Expense");
         }
 
+        [AllowAnonymous]
         [HttpGet]
         public IActionResult Register()
         {
             return View();
         }
 
+        [AllowAnonymous]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
@@ -90,10 +93,57 @@ namespace ExpenseWeb.Controllers
             return RedirectToAction(nameof(Login));
         }
 
+        [Authorize]
         public async Task<IActionResult> Logout()
         {
             HttpContext.Session.Clear();
             await HttpContext.SignOutAsync("Cookies");
+            return RedirectToAction(nameof(Login));
+        }
+
+        [Authorize]
+        [HttpGet]
+        public IActionResult ChangePassword()
+        {
+            return View();
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var error = await _authService.ChangePasswordAsync(model.CurrentPassword, model.NewPassword);
+            if (error != null)
+            {
+                ModelState.AddModelError("", error);
+                return View(model);
+            }
+
+            TempData["SuccessMessage"] = "Senha alterada com sucesso.";
+            return RedirectToAction("Index", "Expense");
+        }
+
+        [AllowAnonymous]
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+
+        [AllowAnonymous]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            await _authService.ForgotPasswordAsync(model.Email);
+            TempData["SuccessMessage"] = "Se o e-mail estiver cadastrado, você receberá instruções para redefinir sua senha.";
             return RedirectToAction(nameof(Login));
         }
     }

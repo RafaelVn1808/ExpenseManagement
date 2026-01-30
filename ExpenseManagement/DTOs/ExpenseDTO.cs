@@ -50,5 +50,11 @@ namespace ExpenseManagement.DTOs
 
         // UserId - preenchido automaticamente pelo controller (não deve ser enviado pelo cliente)
         public string? UserId { get; set; }
+
+        /// <summary>Data/hora de criação (auditoria, somente leitura).</summary>
+        public DateTime? CreatedAt { get; set; }
+
+        /// <summary>Data/hora da última alteração (auditoria, somente leitura).</summary>
+        public DateTime? UpdatedAt { get; set; }
     }
 }

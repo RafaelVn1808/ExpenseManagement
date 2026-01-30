@@ -25,12 +25,14 @@ namespace ExpenseWeb.Controllers
             _imageUploadService = imageUploadService;
         }
 
-        // INDEX COM FILTRO DE MÊS / ANO
+        // INDEX COM FILTRO DE MÊS / ANO, CATEGORIA, STATUS, BUSCA E PAGINAÇÃO
         [HttpGet]
-        public async Task<IActionResult> Index(int? month, int? year, int page = 1, int pageSize = 20)
+        public async Task<IActionResult> Index(int? month, int? year, int page = 1, int pageSize = 0, int? categoryId = null, string? status = null, string? search = null)
         {
             int referenceMonth = month ?? DateTime.Now.Month;
             int referenceYear = year ?? DateTime.Now.Year;
+            if (pageSize <= 0) pageSize = 20;
+            if (pageSize > 100) pageSize = 100;
 
             var firstDay = new DateTime(referenceYear, referenceMonth, 1);
             var lastDay = firstDay.AddMonths(1).AddDays(-1);
@@ -41,15 +43,23 @@ namespace ExpenseWeb.Controllers
                 PageSize = pageSize,
                 From = firstDay,
                 To = lastDay,
+                CategoryId = categoryId,
+                Status = status,
+                Search = search,
                 SortBy = "startDate",
                 SortDir = "desc"
             };
 
             var pagedExpenses = await _expenseService.GetExpensesPaged(parameters);
+            var categories = await _categoryService.GetAllCategories();
 
             ViewBag.SelectedMonth = referenceMonth;
             ViewBag.SelectedYear = referenceYear;
             ViewBag.PageSize = pageSize;
+            ViewBag.CategoryId = categoryId;
+            ViewBag.Status = status;
+            ViewBag.Search = search;
+            ViewBag.Categories = categories ?? Enumerable.Empty<CategoryViewModel>();
 
             return View(pagedExpenses);
         }
@@ -267,7 +277,42 @@ namespace ExpenseWeb.Controllers
                 return View("Error");
 
             return RedirectToAction(nameof(Index));
+        }
 
+        [HttpGet]
+        public async Task<IActionResult> ExportCsv(int? month, int? year, int? categoryId = null, string? status = null, string? search = null)
+        {
+            int referenceMonth = month ?? DateTime.Now.Month;
+            int referenceYear = year ?? DateTime.Now.Year;
+            var firstDay = new DateTime(referenceYear, referenceMonth, 1);
+            var lastDay = firstDay.AddMonths(1).AddDays(-1);
+
+            var parameters = new ExpenseQueryParameters
+            {
+                Page = 1,
+                PageSize = 10000,
+                From = firstDay,
+                To = lastDay,
+                CategoryId = categoryId,
+                Status = status,
+                Search = search,
+                SortBy = "startDate",
+                SortDir = "desc"
+            };
+
+            var paged = await _expenseService.GetExpensesPaged(parameters);
+            var items = paged?.Items ?? Enumerable.Empty<ExpenseViewModel>();
+
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("Data;Descrição;Valor Total;Parcelas;Status;Categoria;Validade");
+            foreach (var e in items)
+            {
+                var valorParcela = e.Installments > 1 ? (e.Amount / e.Installments) : e.Amount;
+                sb.AppendLine($"{e.Date:dd/MM/yyyy};{e.Name};{e.Amount:F2};{(e.Installments > 1 ? e.Installments.ToString() : "À vista")};{e.Status};{e.CategoryName ?? ""};{e.Validity:dd/MM/yyyy}");
+            }
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+            return File(bytes, "text/csv", $"despesas_{referenceYear}_{referenceMonth:D2}.csv");
         }
     }
 }

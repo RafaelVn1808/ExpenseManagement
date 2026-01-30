@@ -175,6 +175,16 @@
     </div>
 </div>
 
+<!-- Toast sucesso categoria -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="toastCategoriaCriada" class="toast align-items-center text-bg-success border-0" role="alert">
+        <div class="d-flex">
+            <div class="toast-body"><i class="bi bi-check-circle me-2"></i>Categoria criada com sucesso.</div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Nova Categoria -->
 <div class="modal fade" id="novaCategoriaModal" tabindex="-1" aria-labelledby="novaCategoriaModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -253,6 +263,11 @@
                     var modal = bootstrap.Modal.getInstance(document.getElementById('novaCategoriaModal'));
                     if (modal) modal.hide();
                     document.getElementById('novaCategoriaNome').value = '';
+                    var toastEl = document.getElementById('toastCategoriaCriada');
+                    if (toastEl) {
+                        var toast = new bootstrap.Toast(toastEl);
+                        toast.show();
+                    }
                 } else {
                     erroEl.textContent = data.message || 'Erro ao criar categoria.';
                     erroEl.style.display = 'block';

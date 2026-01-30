@@ -1,5 +1,6 @@
 using ExpenseWeb.Models;
 using ExpenseWeb.Services.Contracts;
+using Microsoft.Extensions.Caching.Memory;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -9,12 +10,16 @@ namespace ExpenseWeb.Services
     public class CategoryService : ICategoryService
     {
         private readonly IHttpClientFactory _clientFactory;
+        private readonly IMemoryCache _cache;
         private readonly JsonSerializerOptions _options;
         private const string apiEndpoint = "/api/category";
+        private const string CacheKey = "categories_all";
+        private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
 
-        public CategoryService(IHttpClientFactory clientFactory)
+        public CategoryService(IHttpClientFactory clientFactory, IMemoryCache cache)
         {
             _clientFactory = clientFactory;
+            _cache = cache;
             _options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
@@ -24,20 +29,19 @@ namespace ExpenseWeb.Services
 
         public async Task<IEnumerable<CategoryViewModel>> GetAllCategories()
         {
-            var client = _clientFactory.CreateClient("ExpenseApi");
-
-            var response = await client.GetAsync(apiEndpoint);
-            if (response.IsSuccessStatusCode)
+            return await _cache.GetOrCreateAsync(CacheKey, async entry =>
             {
-                var apiResponse = await response.Content.ReadAsStreamAsync();
-                var categories = await JsonSerializer.DeserializeAsync<IEnumerable<CategoryViewModel>>(apiResponse, _options);
-                
-                // Retornar lista vazia se deserialização retornar null
-                return categories ?? Enumerable.Empty<CategoryViewModel>();
-            }
-            
-            // Retornar lista vazia em caso de erro
-            return Enumerable.Empty<CategoryViewModel>();
+                entry.AbsoluteExpirationRelativeToNow = CacheDuration;
+                var client = _clientFactory.CreateClient("ExpenseApi");
+                var response = await client.GetAsync(apiEndpoint);
+                if (response.IsSuccessStatusCode)
+                {
+                    var apiResponse = await response.Content.ReadAsStreamAsync();
+                    var categories = await JsonSerializer.DeserializeAsync<IEnumerable<CategoryViewModel>>(apiResponse, _options);
+                    return categories ?? Enumerable.Empty<CategoryViewModel>();
+                }
+                return Enumerable.Empty<CategoryViewModel>();
+            });
         }
 
         public async Task<CategoryViewModel?> CreateCategory(CategoryViewModel category)
@@ -72,6 +76,7 @@ namespace ExpenseWeb.Services
                 
                 if (createdCategory != null)
                 {
+                    _cache.Remove(CacheKey);
                     return createdCategory;
                 }
                 
@@ -79,6 +84,7 @@ namespace ExpenseWeb.Services
                 var categoryDtoResponse = JsonSerializer.Deserialize<CategoryApiDto>(responseContent, _options);
                 if (categoryDtoResponse != null)
                 {
+                    _cache.Remove(CacheKey);
                     return new CategoryViewModel
                     {
                         CategoryId = categoryDtoResponse.CategoryId,
@@ -126,6 +132,8 @@ namespace ExpenseWeb.Services
         {
             var client = _clientFactory.CreateClient("ExpenseApi");
             var response = await client.DeleteAsync($"{apiEndpoint}/{id}");
+            if (response.IsSuccessStatusCode)
+                _cache.Remove(CacheKey);
             return response.IsSuccessStatusCode;
         }
         

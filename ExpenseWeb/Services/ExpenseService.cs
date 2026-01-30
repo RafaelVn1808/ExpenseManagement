@@ -248,6 +248,17 @@ namespace ExpenseWeb.Services
             }
         }
 
+        public async Task<DashboardStatsViewModel?> GetDashboardStatsAsync(DateTime from, DateTime to)
+        {
+            var client = _clientFactory.CreateClient("ExpenseApi");
+            var fromStr = from.ToString("yyyy-MM-dd");
+            var toStr = to.ToString("yyyy-MM-dd");
+            var response = await client.GetAsync($"{apiEndpoint}stats?from={Uri.EscapeDataString(fromStr)}&to={Uri.EscapeDataString(toStr)}");
+            if (!response.IsSuccessStatusCode) return null;
+            var json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<DashboardStatsViewModel>(json, _options);
+        }
+
         private static string BuildQueryString(ExpenseQueryParameters parameters)
         {
             var query = new List<string>

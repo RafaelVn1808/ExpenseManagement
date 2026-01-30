@@ -1,3 +1,4 @@
+@model ExpenseWeb.Models.DashboardStatsViewModel?
 @{
     ViewData["Title"] = "Dashboard";
 }
@@ -64,6 +65,38 @@
         </div>
     </div>
 
+    @if (Model != null && (Model.ByCategory.Any() || Model.ByMonth.Any()))
+    {
+        <div class="row g-4 mb-4">
+            @if (Model.ByCategory.Any())
+            {
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm rounded-3 h-100">
+                        <div class="card-header bg-white border-0 pt-3">
+                            <h5 class="mb-0"><i class="bi bi-pie-chart me-2 text-primary"></i>Despesas por Categoria (últimos 12 meses)</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="chartByCategory" height="250"></canvas>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (Model.ByMonth.Any())
+            {
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm rounded-3 h-100">
+                        <div class="card-header bg-white border-0 pt-3">
+                            <h5 class="mb-0"><i class="bi bi-graph-up me-2 text-primary"></i>Evolução Mensal</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="chartByMonth" height="250"></canvas>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
     <!-- Card de Boas-vindas -->
     <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
         <div class="row g-0">
@@ -104,3 +137,46 @@
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1) !important;
     }
 </style>
+
+@if (Model != null && (Model.ByCategory.Any() || Model.ByMonth.Any()))
+{
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        (function() {
+            var byCategory = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model?.ByCategory ?? new List<ExpenseWeb.Models.CategorySumViewModel>(), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+            var byMonth = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model?.ByMonth ?? new List<ExpenseWeb.Models.MonthSumViewModel>(), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+
+            if (byCategory.length > 0) {
+                new Chart(document.getElementById('chartByCategory'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: byCategory.map(function(x) { return x.categoryName; }),
+                        datasets: [{
+                            data: byCategory.map(function(x) { return x.total; }),
+                            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16']
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+            if (byMonth.length > 0) {
+                new Chart(document.getElementById('chartByMonth'), {
+                    type: 'bar',
+                    data: {
+                        labels: byMonth.map(function(x) { return x.label; }),
+                        datasets: [{
+                            label: 'Total (R$)',
+                            data: byMonth.map(function(x) { return x.total; }),
+                            backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                            borderColor: '#3b82f6',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+                });
+            }
+        })();
+    </script>
+}
+}

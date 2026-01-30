@@ -6,5 +6,7 @@ namespace ExpenseWeb.Services.Contracts
     {
         Task<LoginResponse?> LoginAsync(string email, string password);
         Task<bool> RegisterAsync(string email, string password);
+        Task<string?> ChangePasswordAsync(string currentPassword, string newPassword);
+        Task<bool> ForgotPasswordAsync(string email);
     }
 }

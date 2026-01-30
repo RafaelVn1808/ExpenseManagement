@@ -11,5 +11,6 @@ namespace ExpenseManagement.Repositories
         Task<Expense> Create(Expense expense);
         Task<Expense> Update(Expense expense);
         Task<Expense?> Delete(int expenseId, string userId);
+        Task<IEnumerable<Expense>> GetExpensesForStats(string userId, DateTime from, DateTime to);
     }
 }

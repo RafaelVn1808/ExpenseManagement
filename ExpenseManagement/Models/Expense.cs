@@ -48,6 +48,11 @@ namespace ExpenseManagement.Models
         [Required]
         [StringLength(450)] // Tamanho padrão do ID do Identity
         public string UserId { get; set; } = string.Empty;
-    }
 
+        /// <summary>Data/hora de criação do registro (auditoria).</summary>
+        public DateTime CreatedAt { get; set; }
+
+        /// <summary>Data/hora da última alteração (auditoria).</summary>
+        public DateTime? UpdatedAt { get; set; }
+    }
 }

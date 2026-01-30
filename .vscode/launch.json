@@ -10,7 +10,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/ExpenseManagement/bin/Debug/net10.0/ExpenseApi.dll",
+            "program": "${workspaceFolder}/ExpenseManagement/bin/Debug/net8.0/ExpenseApi.dll",
             "args": [],
             "cwd": "${workspaceFolder}/ExpenseManagement",
             "stopAtEntry": false,
