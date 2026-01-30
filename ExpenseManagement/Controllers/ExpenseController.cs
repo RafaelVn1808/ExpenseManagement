@@ -55,6 +55,17 @@ namespace ExpenseManagement.Controllers
             return Ok(expenses);
         }
 
+        [HttpGet("stats")]
+        public async Task<ActionResult<DashboardStatsDto>> GetStats([FromQuery] DateTime? from, [FromQuery] DateTime? to)
+        {
+            var userId = GetUserId();
+            var toVal = to ?? DateTime.UtcNow.Date;
+            var fromVal = from ?? toVal.AddMonths(-11);
+            if (fromVal > toVal) (fromVal, toVal) = (toVal, fromVal);
+            var stats = await _service.GetDashboardStatsAsync(userId, fromVal, toVal);
+            return Ok(stats);
+        }
+
         [HttpGet("{id:int}", Name = "ObterExpense")]
         public async Task<ActionResult<ExpenseDTO>> GetById(int id)
         {

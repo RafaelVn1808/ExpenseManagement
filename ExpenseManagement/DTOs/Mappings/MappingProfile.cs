@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using ExpenseManagement.Models;
 
 namespace ExpenseManagement.DTOs.Mappings
@@ -16,7 +16,9 @@ namespace ExpenseManagement.DTOs.Mappings
                     )
                 );
 
-            CreateMap<ExpenseDTO, Expense>();
+            CreateMap<ExpenseDTO, Expense>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore());
 
 
             CreateMap<Category, CategoryDTO>().ReverseMap();

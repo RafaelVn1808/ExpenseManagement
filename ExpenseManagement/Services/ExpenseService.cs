@@ -75,6 +75,7 @@ namespace ExpenseManagement.Services
 
             var expenseEntity = _mapper.Map<Expense>(expenseDto);
             expenseEntity.UserId = userId; // Garantir que o userId seja do usuário autenticado
+            expenseEntity.CreatedAt = DateTime.UtcNow;
 
             await _expenseRepository.Create(expenseEntity);
         }
@@ -96,6 +97,7 @@ namespace ExpenseManagement.Services
 
             _mapper.Map(expenseDto, existingExpense);
             existingExpense.UserId = userId; // Garantir que o userId não seja alterado
+            existingExpense.UpdatedAt = DateTime.UtcNow;
 
             await _expenseRepository.Update(existingExpense);
         }
@@ -108,6 +110,48 @@ namespace ExpenseManagement.Services
                 return null;
 
             return _mapper.Map<ExpenseDTO>(expense);
+        }
+
+        public async Task<DashboardStatsDto> GetDashboardStatsAsync(string userId, DateTime from, DateTime to)
+        {
+            var expenses = (await _expenseRepository.GetExpensesForStats(userId, from, to)).ToList();
+
+            var byCategory = expenses
+                .GroupBy(e => new { e.CategoryId, Name = e.Category?.Name ?? "Sem categoria" })
+                .Select(g => new CategorySumDto
+                {
+                    CategoryName = g.Key.Name,
+                    Total = g.Sum(e => e.Installments <= 1 ? e.TotalAmount : e.InstallmentAmount)
+                })
+                .OrderByDescending(x => x.Total)
+                .ToList();
+
+            var byMonth = new List<MonthSumDto>();
+            var current = new DateTime(from.Year, from.Month, 1);
+            var end = new DateTime(to.Year, to.Month, 1);
+            var ci = System.Globalization.CultureInfo.CurrentCulture;
+            while (current <= end)
+            {
+                var monthTotal = expenses
+                    .Where(e =>
+                    {
+                        if (e.Installments <= 1)
+                            return e.StartDate.Year == current.Year && e.StartDate.Month == current.Month;
+                        var diffMonths = (current.Year - e.StartDate.Year) * 12 + (current.Month - e.StartDate.Month);
+                        return diffMonths >= 0 && diffMonths < e.Installments;
+                    })
+                    .Sum(e => e.Installments <= 1 ? e.TotalAmount : e.InstallmentAmount);
+                byMonth.Add(new MonthSumDto
+                {
+                    Year = current.Year,
+                    Month = current.Month,
+                    Label = $"{ci.DateTimeFormat.GetMonthName(current.Month).Substring(0, 3)}/{current.Year}",
+                    Total = monthTotal
+                });
+                current = current.AddMonths(1);
+            }
+
+            return new DashboardStatsDto { ByCategory = byCategory, ByMonth = byMonth };
         }
 
         private async Task ValidateExpenseAsync(ExpenseDTO expenseDto)

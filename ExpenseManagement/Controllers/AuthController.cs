@@ -208,5 +208,60 @@ namespace ExpenseApi.Controllers
             var bytes = RandomNumberGenerator.GetBytes(64);
             return Convert.ToBase64String(bytes);
         }
+
+        /// <summary>Troca de senha do usuário autenticado.</summary>
+        [Authorize]
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.CurrentPassword) || string.IsNullOrWhiteSpace(dto.NewPassword))
+            {
+                return BadRequest(new { message = "Senha atual e nova senha são obrigatórias." });
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(new { message = "Usuário não identificado." });
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return NotFound(new { message = "Usuário não encontrado." });
+            }
+
+            var result = await _userManager.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword);
+            if (!result.Succeeded)
+            {
+                var errors = result.Errors.Select(e => e.Description);
+                return BadRequest(new { message = "Não foi possível alterar a senha.", errors });
+            }
+
+            _logger.LogInformation("Senha alterada com sucesso para o usuário: {Email}", user.Email);
+            return Ok(new { message = "Senha alterada com sucesso." });
+        }
+
+        /// <summary>Esqueci minha senha - envia instruções por e-mail (stub: sempre retorna sucesso por segurança).</summary>
+        [AllowAnonymous]
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Email))
+            {
+                return BadRequest(new { message = "Informe o e-mail." });
+            }
+
+            var user = await _userManager.FindByEmailAsync(dto.Email.Trim());
+            if (user != null)
+            {
+                // Em produção: gerar token de reset, salvar em tabela com expiração, enviar e-mail com link.
+                // Por ora apenas log para não revelar se o e-mail existe.
+                _logger.LogInformation("Solicitação de recuperação de senha para: {Email}", dto.Email);
+            }
+
+            // Sempre retorna sucesso para não revelar se o e-mail existe no sistema.
+            return Ok(new { message = "Se o e-mail estiver cadastrado, você receberá instruções para redefinir sua senha." });
+        }
     }
 }

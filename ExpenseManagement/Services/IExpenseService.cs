@@ -10,5 +10,6 @@ namespace ExpenseManagement.Services
         Task CreateExpensesAsync(ExpenseDTO expenseDTO, string userId);
         Task UpdateExpenseAsync(ExpenseDTO expenseDTO, string userId);
         Task<ExpenseDTO?> DeleteExpenseAsync(int id, string userId);
+        Task<DashboardStatsDto> GetDashboardStatsAsync(string userId, DateTime from, DateTime to);
     }
 }

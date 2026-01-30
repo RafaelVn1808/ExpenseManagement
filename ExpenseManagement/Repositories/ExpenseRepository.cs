@@ -144,5 +144,16 @@ namespace ExpenseManagement.Repositories
             return expense;
         }
 
+        public async Task<IEnumerable<Expense>> GetExpensesForStats(string userId, DateTime from, DateTime to)
+        {
+            return await _context.Expenses
+                .Include(c => c.Category)
+                .Where(e => e.UserId == userId &&
+                    ((e.Installments <= 1 && e.StartDate >= from && e.StartDate <= to)
+                     || (e.Installments > 1 && e.StartDate <= to
+                         && EF.Functions.DateDiffMonth(e.StartDate, from) >= 0
+                         && EF.Functions.DateDiffMonth(e.StartDate, from) <= (e.Installments - 1))))
+                .ToListAsync();
+        }
     }
 }

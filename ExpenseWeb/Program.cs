@@ -10,12 +10,13 @@ var builder = WebApplication.CreateBuilder(args);
 // MVC
 builder.Services.AddControllersWithViews();
 
-// 🔗 HTTP CLIENT → API
+// 🔗 HTTP CLIENT → API (no Azure: Application Setting ServiceUri__ExpenseApi = URL da API)
+var apiBaseUrl = builder.Configuration["ServiceUri:ExpenseApi"] ?? "";
+if (string.IsNullOrWhiteSpace(apiBaseUrl))
+    throw new InvalidOperationException("ServiceUri:ExpenseApi não configurado. No Azure: Application Settings → ServiceUri__ExpenseApi (ex.: https://sua-api.azurewebsites.net)");
 builder.Services.AddHttpClient("ExpenseApi", client =>
 {
-    client.BaseAddress = new Uri(
-        builder.Configuration["ServiceUri:ExpenseApi"]!
-    );
+    client.BaseAddress = new Uri(apiBaseUrl.TrimEnd('/') + "/");
 })
 .AddHttpMessageHandler<JwtHandler>(); // Adiciona o token JWT automaticamente em todas as requisições
 
@@ -61,6 +62,9 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownNetworks.Clear();
     options.KnownProxies.Clear();
 });
+
+// 🔧 CACHE (categorias pouco alteradas)
+builder.Services.AddMemoryCache();
 
 // 🔧 SERVICES
 builder.Services.AddScoped<IExpenseService, ExpenseService>();

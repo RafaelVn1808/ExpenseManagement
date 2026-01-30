@@ -88,6 +88,12 @@ namespace ExpenseManagement.Migrations
                     b.Property<DateTime?>("Validity")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
                     b.HasKey("ExpenseId");
 
                     b.HasIndex("CategoryId");

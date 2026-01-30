@@ -10,19 +10,34 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Swashbuckle.AspNetCore;
 using System.Text;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Log de erros de inicialização (aparece no Log Stream do Azure quando habilitado)
+try
+{
+    await RunAsync(builder);
+}
+catch (Exception ex)
+{
+    await Console.Error.WriteLineAsync($"[STARTUP ERROR] {ex.GetType().Name}: {ex.Message}");
+    await Console.Error.WriteLineAsync(ex.StackTrace);
+    throw;
+}
+
+static async Task RunAsync(WebApplicationBuilder builder)
+{
 // Add services to the container.
 
-// Validação: connection string em appsettings.json / appsettings.Development.json (produção: Azure App Settings)
+// Validação: connection string (no Azure use Application Setting: ConnectionStrings__DefaultConnection)
 var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrWhiteSpace(defaultConnection))
 {
     throw new InvalidOperationException(
-        "ConnectionString 'DefaultConnection' não configurada. Configure em appsettings.json ou appsettings.Development.json (produção: Azure App Settings).");
+        "ConnectionString 'DefaultConnection' não configurada. No Azure: Application Settings → ConnectionStrings__DefaultConnection");
 }
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -90,14 +105,15 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// Swagger/OpenAPI (Swashbuckle para .NET 8)
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 // Valida��o da chave JWT
 var jwtKey = builder.Configuration["Jwt:Key"];
 if (string.IsNullOrEmpty(jwtKey) || jwtKey.Length < 32)
 {
-    throw new InvalidOperationException("Chave JWT não configurada ou com menos de 32 caracteres. Configure em appsettings.json ou appsettings.Development.json (produção: Azure App Settings).");
+    throw new InvalidOperationException("Chave JWT não configurada ou com menos de 32 caracteres. No Azure: Application Settings → Jwt__Key (mín. 32 caracteres).");
 }
 
 builder.Services.AddAuthentication(options =>
@@ -148,14 +164,16 @@ app.UseMiddleware<ExceptionMiddleware>();
 app.UseForwardedHeaders();
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
     app.UseSwaggerUI(options =>
-        options.SwaggerEndpoint("/openapi/v1.json", "Expense Management API"));
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Expense Management API"));
 }
 else
 {
     // Em produ��o, proteger Swagger com autentica��o
-    app.MapOpenApi().RequireAuthorization();
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Expense Management API"));
 }
 
 app.UseHttpsRedirection();
@@ -177,5 +195,5 @@ using (var scope = app.Services.CreateScope())
     await IdentitySeed.SeedAsync(services, app.Configuration, app.Environment);
 }
 
-
-app.Run();
+await app.RunAsync();
+}

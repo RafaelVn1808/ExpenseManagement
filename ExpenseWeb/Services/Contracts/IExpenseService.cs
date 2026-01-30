@@ -9,5 +9,6 @@ namespace ExpenseWeb.Services.Contracts
         Task<ExpenseViewModel> CreateExpense(ExpenseViewModel expense);
         Task<ExpenseViewModel> UpdateExpense(ExpenseViewModel expense);
         Task<bool> DeleteExpense(int id);
+        Task<DashboardStatsViewModel?> GetDashboardStatsAsync(DateTime from, DateTime to);
     }
 }

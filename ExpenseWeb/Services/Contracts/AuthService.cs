@@ -59,5 +59,43 @@ namespace ExpenseWeb.Services
 
             return response.IsSuccessStatusCode;
         }
+
+        public async Task<string?> ChangePasswordAsync(string currentPassword, string newPassword)
+        {
+            var client = _httpClientFactory.CreateClient("ExpenseApi");
+            var payload = new { currentPassword, newPassword };
+            var content = new StringContent(
+                JsonSerializer.Serialize(payload),
+                Encoding.UTF8,
+                "application/json");
+            var response = await client.PostAsync("api/auth/change-password", content);
+            if (!response.IsSuccessStatusCode)
+            {
+                var body = await response.Content.ReadAsStringAsync();
+                try
+                {
+                    var obj = JsonSerializer.Deserialize<JsonElement>(body);
+                    if (obj.TryGetProperty("message", out var msg))
+                        return msg.GetString();
+                    if (obj.TryGetProperty("errors", out var errs))
+                        return errs.ToString();
+                }
+                catch { }
+                return "Não foi possível alterar a senha.";
+            }
+            return null;
+        }
+
+        public async Task<bool> ForgotPasswordAsync(string email)
+        {
+            var client = _httpClientFactory.CreateClient("ExpenseApi");
+            var payload = new { email };
+            var content = new StringContent(
+                JsonSerializer.Serialize(payload),
+                Encoding.UTF8,
+                "application/json");
+            var response = await client.PostAsync("api/auth/forgot-password", content);
+            return response.IsSuccessStatusCode;
+        }
     }
 }
