@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using ExpenseApi.Context;
 using ExpenseApi.Identity;
 using ExpenseApi.Middlewares;
@@ -15,12 +15,19 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-
 // Add services to the container.
 
+// Validação: em Development os valores vêm de User Secrets (dotnet user-secrets set)
+var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(defaultConnection))
+{
+    throw new InvalidOperationException(
+        "ConnectionString 'DefaultConnection' não configurada. " +
+        "Em desenvolvimento, use User Secrets: dotnet user-secrets set \"ConnectionStrings__DefaultConnection\" \"<sua-connection-string>\" --project ExpenseManagement/ExpenseApi.csproj");
+}
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(defaultConnection));
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());  
 builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
@@ -31,7 +38,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IImageUploadService, ImageUploadService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(defaultConnection));
 
 
 builder.Services
@@ -91,7 +98,7 @@ builder.Services.AddOpenApi();
 var jwtKey = builder.Configuration["Jwt:Key"];
 if (string.IsNullOrEmpty(jwtKey) || jwtKey.Length < 32)
 {
-    throw new InvalidOperationException("A chave JWT deve ter pelo menos 32 caracteres. Configure 'Jwt:Key' no appsettings.json ou vari�veis de ambiente.");
+    throw new InvalidOperationException("Chave JWT não configurada ou com menos de 32 caracteres. Em desenvolvimento: dotnet user-secrets set \"Jwt__Key\" \"<chave-32-chars>\" --project ExpenseManagement/ExpenseApi.csproj");
 }
 
 builder.Services.AddAuthentication(options =>
