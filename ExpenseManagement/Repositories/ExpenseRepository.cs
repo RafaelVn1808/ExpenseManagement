@@ -28,15 +28,19 @@ namespace ExpenseManagement.Repositories
                 .Include(c => c.Category)
                 .Where(e => e.UserId == userId);
 
-            // Filtro por período: despesa parcelada aparece em todos os meses das parcelas
-            // Ex.: início jan, 3 parcelas → aparece em jan, fev e mar
+            // Filtro por período:
+            // À vista (1 parcela): só aparece no mês da despesa (StartDate entre From e To).
+            // Parcelada (2+ parcelas): aparece em cada mês das parcelas (ex.: jan, 3x → jan, fev, mar).
             if (parameters.From.HasValue && parameters.To.HasValue)
             {
                 var fromVal = parameters.From.Value;
                 var toVal = parameters.To.Value;
                 query = query.Where(e =>
-                    e.StartDate <= toVal &&
-                    (e.Installments <= 1 || EF.Functions.DateDiffMonth(e.StartDate, fromVal) <= (e.Installments - 1)));
+                    (e.Installments <= 1 && e.StartDate >= fromVal && e.StartDate <= toVal)
+                    || (e.Installments > 1
+                        && e.StartDate <= toVal
+                        && EF.Functions.DateDiffMonth(e.StartDate, fromVal) >= 0
+                        && EF.Functions.DateDiffMonth(e.StartDate, fromVal) <= (e.Installments - 1)));
             }
             else
             {

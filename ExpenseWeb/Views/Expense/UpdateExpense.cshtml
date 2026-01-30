@@ -122,15 +122,13 @@
                             
                             @if (!string.IsNullOrEmpty(Model.NoteImageUrl))
                             {
-                                <div class="mb-2">
+                                <div class="mb-2 p-2 border rounded bg-light" id="noteCurrentWrap">
                                     <p class="text-muted small mb-1">Imagem atual:</p>
-                                    <img src="@Model.NoteImageUrl" alt="Nota Fiscal" class="img-thumbnail" style="max-height: 150px; max-width: 100%;" />
-                                    <div class="form-check mt-2">
-                                        <input asp-for="RemoveNoteImage" class="form-check-input" type="checkbox" />
-                                        <label asp-for="RemoveNoteImage" class="form-check-label">
-                                            Remover imagem atual
-                                        </label>
-                                    </div>
+                                    <img src="@Model.NoteImageUrl" alt="Nota Fiscal" class="img-thumbnail d-block" style="max-height: 150px; max-width: 100%;" />
+                                    <input type="hidden" asp-for="RemoveNoteImage" id="RemoveNoteImageValue" />
+                                    <button type="button" class="btn btn-sm btn-outline-danger mt-2 btn-remove-saved-image" data-remove-for="note" title="Excluir esta imagem ao salvar">
+                                        <i class="bi bi-trash me-1"></i> Excluir imagem
+                                    </button>
                                 </div>
                             }
                             
@@ -163,15 +161,13 @@
                             
                             @if (!string.IsNullOrEmpty(Model.ProofImageUrl))
                             {
-                                <div class="mb-2">
+                                <div class="mb-2 p-2 border rounded bg-light" id="proofCurrentWrap">
                                     <p class="text-muted small mb-1">Imagem atual:</p>
-                                    <img src="@Model.ProofImageUrl" alt="Comprovante" class="img-thumbnail" style="max-height: 150px; max-width: 100%;" />
-                                    <div class="form-check mt-2">
-                                        <input asp-for="RemoveProofImage" class="form-check-input" type="checkbox" />
-                                        <label asp-for="RemoveProofImage" class="form-check-label">
-                                            Remover imagem atual
-                                        </label>
-                                    </div>
+                                    <img src="@Model.ProofImageUrl" alt="Comprovante" class="img-thumbnail d-block" style="max-height: 150px; max-width: 100%;" />
+                                    <input type="hidden" asp-for="RemoveProofImage" id="RemoveProofImageValue" />
+                                    <button type="button" class="btn btn-sm btn-outline-danger mt-2 btn-remove-saved-image" data-remove-for="proof" title="Excluir esta imagem ao salvar">
+                                        <i class="bi bi-trash me-1"></i> Excluir imagem
+                                    </button>
                                 </div>
                             }
                             
@@ -238,5 +234,26 @@
             document.getElementById(previewId + 'Img').src = '';
             document.getElementById(inputId).value = '';
         }
+
+        document.querySelectorAll('.btn-remove-saved-image').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var forType = this.getAttribute('data-remove-for');
+                var wrap, hiddenId;
+                if (forType === 'note') {
+                    wrap = document.getElementById('noteCurrentWrap');
+                    hiddenId = 'RemoveNoteImageValue';
+                } else if (forType === 'proof') {
+                    wrap = document.getElementById('proofCurrentWrap');
+                    hiddenId = 'RemoveProofImageValue';
+                }
+                if (wrap && hiddenId) {
+                    document.getElementById(hiddenId).value = 'true';
+                    var msg = forType === 'note' ? 'Imagem da nota fiscal será excluída ao salvar.' : 'Imagem do comprovante será excluída ao salvar.';
+                    wrap.querySelector('p').innerHTML = '<i class="bi bi-info-circle me-1"></i>' + msg;
+                    wrap.querySelector('img').style.display = 'none';
+                    this.style.display = 'none';
+                }
+            });
+        });
     </script>
 }

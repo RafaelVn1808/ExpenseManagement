@@ -7,7 +7,8 @@
     int selectedYear = ViewBag.SelectedYear ?? DateTime.Now.Year;
     
     var items = Model?.Items ?? Enumerable.Empty<ExpenseWeb.Models.ExpenseViewModel>();
-    var totalDespesas = items.Sum(e => e.Amount);
+    // Total do mês: à vista = valor total; parcelada = só o valor da parcela daquele mês
+    var totalDespesas = items.Sum(e => e.Installments > 1 ? (e.Amount / e.Installments) : e.Amount);
     var quantidadeDespesas = items.Count();
 }
 
@@ -108,6 +109,7 @@
                         <div>
                             <h6 class="text-muted mb-1">Total de Despesas</h6>
                             <h3 class="mb-0 text-primary">@totalDespesas.ToString("C")</h3>
+                            <small class="text-muted">À vista: valor total; parcelada: valor da parcela do mês</small>
                         </div>
                         <div class="display-4 text-primary opacity-25">
                             <i class="bi bi-currency-dollar"></i>
@@ -153,7 +155,10 @@
                             <i class="bi bi-card-text me-1"></i>Nome
                         </th>
                         <th>
-                            <i class="bi bi-currency-dollar me-1"></i>Valor
+                            <i class="bi bi-currency-dollar me-1"></i>Valor parcela
+                        </th>
+                        <th>
+                            <i class="bi bi-currency-dollar me-1"></i>Valor total
                         </th>
                         <th>
                             <i class="bi bi-123 me-1"></i>Parcela
@@ -179,7 +184,7 @@
                     @if (!items.Any())
                     {
                         <tr>
-                            <td colspan="9" class="text-center py-5">
+                            <td colspan="10" class="text-center py-5">
                                 <div class="text-muted">
                                     <i class="bi bi-inbox display-4 d-block mb-3"></i>
                                     <h5>Nenhuma despesa encontrada</h5>
@@ -203,7 +208,17 @@
                                     <span class="fw-semibold">@item.Name</span>
                                 </td>
                                 <td>
-                                    <span class="fw-bold text-primary">@item.Amount.ToString("C")</span>
+                                    @{
+                                        var valorParcela = item.Installments > 1 ? (item.Amount / item.Installments) : item.Amount;
+                                    }
+                                    <span class="fw-bold text-primary">@valorParcela.ToString("C")</span>
+                                </td>
+                                <td>
+                                    <span class="text-secondary">@item.Amount.ToString("C")</span>
+                                    @if (item.Installments > 1)
+                                    {
+                                        <br /><small class="text-muted">(@item.Installments)x</small>
+                                    }
                                 </td>
                                 <td>
                                     @{

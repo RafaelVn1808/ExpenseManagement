@@ -92,7 +92,6 @@ namespace ExpenseManagement.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        [Authorize(Roles = Roles.Admin)] // Apenas Admin pode deletar
         public async Task<IActionResult> Delete(int id)
         {
             var categoryDTO = await _categoryService.GetCategoryById(id);

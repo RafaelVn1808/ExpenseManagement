@@ -6,5 +6,6 @@ namespace ExpenseWeb.Services.Contracts
     {
         Task<IEnumerable<CategoryViewModel>> GetAllCategories();
         Task<CategoryViewModel?> CreateCategory(CategoryViewModel category);
+        Task<bool> DeleteCategory(int id);
     }
 }
