@@ -17,47 +17,43 @@ namespace ExpenseWeb.Services
 
         public async Task<LoginResponse?> LoginAsync(string email, string password)
         {
-            var client = _httpClientFactory.CreateClient("ExpenseApi");
-
-            var payload = new
+            try
             {
-                email,
-                password
-            };
-
-            var content = new StringContent(
-                JsonSerializer.Serialize(payload),
-                Encoding.UTF8,
-                "application/json");
-
-            var response = await client.PostAsync("api/auth/login", content);
-
-            if (!response.IsSuccessStatusCode)
-                return null;
-
-            var json = await response.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<LoginResponse>(json);
+                var client = _httpClientFactory.CreateClient("ExpenseApi");
+                var payload = new { email, password };
+                var content = new StringContent(
+                    JsonSerializer.Serialize(payload),
+                    Encoding.UTF8,
+                    "application/json");
+                var response = await client.PostAsync("api/auth/login", content);
+                if (!response.IsSuccessStatusCode)
+                    return null;
+                var json = await response.Content.ReadAsStringAsync();
+                return JsonSerializer.Deserialize<LoginResponse>(json);
+            }
+            catch (HttpRequestException)
+            {
+                return null; // API inacessível (URL errada, timeout, etc.)
+            }
         }
 
         public async Task<bool> RegisterAsync(string email, string password)
         {
-            var client = _httpClientFactory.CreateClient("ExpenseApi");
-
-            var payload = new
+            try
             {
-                email,
-                password,
-                confirmPassword = password
-            };
-
-            var content = new StringContent(
-                JsonSerializer.Serialize(payload),
-                Encoding.UTF8,
-                "application/json");
-
-            var response = await client.PostAsync("api/auth/register", content);
-
-            return response.IsSuccessStatusCode;
+                var client = _httpClientFactory.CreateClient("ExpenseApi");
+                var payload = new { email, password, confirmPassword = password };
+                var content = new StringContent(
+                    JsonSerializer.Serialize(payload),
+                    Encoding.UTF8,
+                    "application/json");
+                var response = await client.PostAsync("api/auth/register", content);
+                return response.IsSuccessStatusCode;
+            }
+            catch (HttpRequestException)
+            {
+                return false; // API inacessível
+            }
         }
 
         public async Task<string?> ChangePasswordAsync(string currentPassword, string newPassword)
