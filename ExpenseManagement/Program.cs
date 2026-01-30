@@ -22,11 +22,15 @@ try
     await RunAsync(builder);
 }
 catch (Exception ex)
-{
-    await Console.Error.WriteLineAsync($"[STARTUP ERROR] {ex.GetType().Name}: {ex.Message}");
-    await Console.Error.WriteLineAsync(ex.StackTrace);
-    throw;
-}
+    {
+        // HostAbortedException é esperado quando dotnet ef database update encerra o host
+        if (ex.GetType().Name != "HostAbortedException")
+        {
+            await Console.Error.WriteLineAsync($"[STARTUP ERROR] {ex.GetType().Name}: {ex.Message}");
+            await Console.Error.WriteLineAsync(ex.StackTrace ?? "");
+        }
+        throw;
+    }
 
 static async Task RunAsync(WebApplicationBuilder builder)
 {

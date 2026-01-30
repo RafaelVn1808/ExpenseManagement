@@ -20,6 +20,17 @@ builder.Services.AddHttpClient("ExpenseApi", client =>
 })
 .AddHttpMessageHandler<JwtHandler>(); // Adiciona o token JWT automaticamente em todas as requisições
 
+// 🔐 DATA PROTECTION (produção: chaves persistentes para sessão/cookies sobreviverem reinício)
+if (!builder.Environment.IsDevelopment())
+{
+    var keyPath = Path.Combine(Environment.GetEnvironmentVariable("HOME") ?? "D:\\home", "data", "ProtectionKeys");
+    var dir = new DirectoryInfo(keyPath);
+    if (!dir.Exists) dir.Create();
+    builder.Services.AddDataProtection()
+        .PersistKeysToFileSystem(dir)
+        .SetApplicationName("ExpenseWeb");
+}
+
 // 🔐 SESSION (OBRIGATÓRIO)
 builder.Services.AddDistributedMemoryCache();
 
