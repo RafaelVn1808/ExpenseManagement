@@ -28,9 +28,10 @@ namespace ExpenseApi.Controllers
         }
 
         [HttpGet("users")]
+        [ResponseCache(NoStore = true, Duration = 0)]
         public async Task<ActionResult<IEnumerable<UserRolesDto>>> GetUsers()
         {
-            var users = await _userManager.Users.ToListAsync();
+            var users = await _userManager.Users.OrderBy(u => u.Email).ToListAsync();
             var result = new List<UserRolesDto>();
 
             foreach (var user in users)
@@ -44,7 +45,7 @@ namespace ExpenseApi.Controllers
                 });
             }
 
-            return Ok(result.OrderBy(u => u.Email));
+            return Ok(result);
         }
 
         [HttpPost("users/{userId}/roles")]

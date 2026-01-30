@@ -26,9 +26,21 @@ namespace ExpenseWeb.Services
             var client = _httpClientFactory.CreateClient("ExpenseApi");
             var response = await client.GetAsync("api/admin/users");
 
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                throw new UnauthorizedAccessException(
+                    "Não foi possível carregar a lista de usuários. Faça login novamente como administrador.");
+            }
+            if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+            {
+                throw new UnauthorizedAccessException(
+                    "Acesso negado. Apenas administradores podem acessar a lista de usuários.");
+            }
             if (!response.IsSuccessStatusCode)
             {
-                return Array.Empty<AdminUserViewModel>();
+                var body = await response.Content.ReadAsStringAsync();
+                throw new InvalidOperationException(
+                    $"Não foi possível carregar a lista de usuários. (Status: {response.StatusCode}) {body}");
             }
 
             var json = await response.Content.ReadAsStringAsync();

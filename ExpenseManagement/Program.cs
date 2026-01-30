@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using ExpenseApi.Context;
 using ExpenseApi.Identity;
 using ExpenseApi.Middlewares;
@@ -17,13 +17,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-// Validação: em Development os valores vêm de User Secrets (dotnet user-secrets set)
+// Validação: connection string em appsettings.json / appsettings.Development.json (produção: Azure App Settings)
 var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrWhiteSpace(defaultConnection))
 {
     throw new InvalidOperationException(
-        "ConnectionString 'DefaultConnection' não configurada. " +
-        "Em desenvolvimento, use User Secrets: dotnet user-secrets set \"ConnectionStrings__DefaultConnection\" \"<sua-connection-string>\" --project ExpenseManagement/ExpenseApi.csproj");
+        "ConnectionString 'DefaultConnection' não configurada. Configure em appsettings.json ou appsettings.Development.json (produção: Azure App Settings).");
 }
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -98,7 +97,7 @@ builder.Services.AddOpenApi();
 var jwtKey = builder.Configuration["Jwt:Key"];
 if (string.IsNullOrEmpty(jwtKey) || jwtKey.Length < 32)
 {
-    throw new InvalidOperationException("Chave JWT não configurada ou com menos de 32 caracteres. Em desenvolvimento: dotnet user-secrets set \"Jwt__Key\" \"<chave-32-chars>\" --project ExpenseManagement/ExpenseApi.csproj");
+    throw new InvalidOperationException("Chave JWT não configurada ou com menos de 32 caracteres. Configure em appsettings.json ou appsettings.Development.json (produção: Azure App Settings).");
 }
 
 builder.Services.AddAuthentication(options =>

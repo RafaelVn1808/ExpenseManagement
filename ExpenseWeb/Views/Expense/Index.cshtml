@@ -206,8 +206,14 @@
                                     <span class="fw-bold text-primary">@item.Amount.ToString("C")</span>
                                 </td>
                                 <td>
+                                    @{
+                                        var curInst = item.Installments > 1
+                                            ? Math.Max(1, Math.Min(1 + (selectedYear - item.ReferenceYear) * 12 + (selectedMonth - item.ReferenceMonth), item.Installments))
+                                            : 1;
+                                        var label = item.Installments > 1 ? $"{curInst}/{item.Installments}" : "À vista";
+                                    }
                                     <span class="badge bg-info text-dark">
-                                        <i class="bi bi-123 me-1"></i>@item.InstallmentLabel
+                                        <i class="bi bi-123 me-1"></i>@label
                                     </span>
                                 </td>
                                 <td>
