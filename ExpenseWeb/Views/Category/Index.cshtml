@@ -1,0 +1,57 @@
+@model IList<ExpenseWeb.Models.CategoryViewModel>
+@{
+    ViewData["Title"] = "Categorias";
+}
+
+<div class="container">
+    <h2 class="mb-4"><i class="bi bi-tag me-2"></i>Categorias</h2>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">@TempData["ErrorMessage"]</div>
+    }
+
+    <p class="mb-3">
+        <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Nova Categoria</a>
+        <a asp-action="Index" asp-controller="Expense" class="btn btn-outline-secondary ms-2">Voltar às Despesas</a>
+    </p>
+
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Nome</th>
+                    <th style="width: 120px;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model == null || Model.Count == 0)
+                {
+                    <tr>
+                        <td colspan="2" class="text-center text-muted">Nenhuma categoria cadastrada.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var cat in Model)
+                    {
+                        <tr>
+                            <td>@cat.Name</td>
+                            <td>
+                                <form method="post" action="@Url.Action("Delete", "Category")" class="d-inline" onsubmit="return confirm('Excluir a categoria \'@(cat.Name?.Replace("'", "\\'") ?? "")\'? Despesas vinculadas podem ficar sem categoria.');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@cat.CategoryId" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -124,19 +124,47 @@
 
         .input-group {
             position: relative;
+            display: flex;
+            align-items: stretch;
         }
 
-        .input-group i {
+        .input-group > i.input-icon {
             position: absolute;
             left: 1rem;
             top: 50%;
             transform: translateY(-50%);
             color: #64748b;
             z-index: 10;
+            font-size: 1rem;
         }
 
         .input-group .form-control {
             padding-left: 3rem;
+            padding-right: 2.75rem;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .input-group .toggle-password {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 2.75rem;
+            min-width: 2.75rem;
+            margin: 0;
+            padding: 0;
+            border: 2px solid #e2e8f0;
+            border-left: 1px solid #dee2e6;
+            border-radius: 0 8px 8px 0;
+            background: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .input-group .toggle-password i {
+            pointer-events: none;
+            font-size: 1rem;
         }
 
         .alert-danger {
@@ -215,7 +243,7 @@
                         <i class="bi bi-envelope me-1"></i> Email
                     </label>
                     <div class="input-group">
-                        <i class="bi bi-envelope"></i>
+                        <i class="bi bi-envelope input-icon"></i>
                         <input asp-for="Email" class="form-control" placeholder="seu@email.com" autocomplete="email" />
                     </div>
                     <span asp-validation-for="Email" class="text-danger"></span>
@@ -226,8 +254,11 @@
                         <i class="bi bi-lock me-1"></i> Senha
                     </label>
                     <div class="input-group">
-                        <i class="bi bi-lock"></i>
-                        <input asp-for="Password" class="form-control" placeholder="••••••••" autocomplete="new-password" />
+                        <i class="bi bi-lock input-icon"></i>
+                        <input asp-for="Password" id="registerPassword" type="password" class="form-control" placeholder="••••••••" autocomplete="new-password" />
+                        <button type="button" class="btn btn-outline-secondary toggle-password" data-target="registerPassword" title="Mostrar/ocultar senha" aria-label="Mostrar senha">
+                            <i class="bi bi-eye"></i>
+                        </button>
                     </div>
                     <span asp-validation-for="Password" class="text-danger"></span>
                     <div class="password-requirements">
@@ -240,8 +271,11 @@
                         <i class="bi bi-lock-fill me-1"></i> Confirmar Senha
                     </label>
                     <div class="input-group">
-                        <i class="bi bi-lock-fill"></i>
-                        <input asp-for="ConfirmPassword" class="form-control" placeholder="••••••••" autocomplete="new-password" />
+                        <i class="bi bi-lock-fill input-icon"></i>
+                        <input asp-for="ConfirmPassword" id="registerConfirmPassword" type="password" class="form-control" placeholder="••••••••" autocomplete="new-password" />
+                        <button type="button" class="btn btn-outline-secondary toggle-password" data-target="registerConfirmPassword" title="Mostrar/ocultar senha" aria-label="Mostrar senha">
+                            <i class="bi bi-eye"></i>
+                        </button>
                     </div>
                     <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
                 </div>
@@ -262,5 +296,23 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
     <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    <script>
+        document.querySelectorAll('.toggle-password').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var id = this.getAttribute('data-target');
+                var input = document.getElementById(id);
+                var icon = this.querySelector('i');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('bi-eye');
+                    icon.classList.add('bi-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('bi-eye-slash');
+                    icon.classList.add('bi-eye');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

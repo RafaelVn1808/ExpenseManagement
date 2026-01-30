@@ -15,6 +15,13 @@ namespace ExpenseWeb.Controllers
             _categoryService = categoryService;
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Index()
+        {
+            var categories = await _categoryService.GetAllCategories();
+            return View(categories.ToList());
+        }
+
         // GET: Category/Create
         [HttpGet]
         public IActionResult Create()
@@ -43,7 +50,7 @@ namespace ExpenseWeb.Controllers
                 }
 
                 TempData["SuccessMessage"] = "Categoria criada com sucesso!";
-                return RedirectToAction("Index", "Expense");
+                return RedirectToAction(nameof(Index));
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -86,6 +93,16 @@ namespace ExpenseWeb.Controllers
             {
                 return Json(new { success = false, message = ex.Message });
             }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var success = await _categoryService.DeleteCategory(id);
+            TempData[success ? "SuccessMessage" : "ErrorMessage"] =
+                success ? "Categoria excluída com sucesso." : "Não foi possível excluir a categoria (pode estar em uso por despesas).";
+            return RedirectToAction(nameof(Index));
         }
     }
 }

@@ -121,6 +121,13 @@ namespace ExpenseWeb.Services
             
             throw new InvalidOperationException($"Erro ao criar categoria (Status: {response.StatusCode}): {errorContent}");
         }
+
+        public async Task<bool> DeleteCategory(int id)
+        {
+            var client = _clientFactory.CreateClient("ExpenseApi");
+            var response = await client.DeleteAsync($"{apiEndpoint}/{id}");
+            return response.IsSuccessStatusCode;
+        }
         
         // DTO auxiliar para deserialização da API
         private class CategoryApiDto
