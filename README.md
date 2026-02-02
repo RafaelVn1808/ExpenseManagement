@@ -14,22 +14,34 @@ Aplicação para controle de despesas com autenticação, autorização por role
 - Controle de acesso por roles (Admin/User)
 
 ## Stack
-- .NET 10, ASP.NET Core Web API, ASP.NET Core MVC
+- .NET 8, ASP.NET Core Web API, ASP.NET Core MVC
 - EF Core, AutoMapper, ASP.NET Identity
-- SQL Server
+- PostgreSQL (Npgsql)
 - xUnit, Moq
 - Docker, Docker Compose
 
 ## Requisitos
-- .NET SDK 10
-- SQL Server
+- .NET SDK 8
+- PostgreSQL (ou Docker)
 
 ## Configuração
-1. Ajuste a string de conexão em `ExpenseManagement/appsettings.json`.
-2. Ajuste a URL da API em `ExpenseWeb/appsettings.json` (`ServiceUri:ExpenseApi`).
-3. Configure a chave JWT em `ExpenseManagement/appsettings.json` e `ExpenseWeb/appsettings.json`.
+1. Copie `.env.example` para `.env` e preencha os valores (obrigatório: `JWT_KEY` com mínimo 32 caracteres).
+2. Para execução local sem Docker: ajuste a connection string em `ExpenseManagement/appsettings.json` (formato PostgreSQL).
+3. A URL da API em `ExpenseWeb` é configurada via `ServiceUri__ExpenseApi` (no Docker usa `http://expense-api:8080`).
 
-## Execução
+## Execução com Docker (recomendado)
+```bash
+docker compose up -d
+```
+- API: http://localhost:8080
+- Web: http://localhost:8081
+- PostgreSQL: localhost:5432
+
+> **Nota:** Se aparecer erro "email must be verified" ao baixar a imagem do PostgreSQL:
+> 1. Verifique o e-mail da sua conta em [hub.docker.com](https://hub.docker.com), ou
+> 2. Execute `docker logout` e tente novamente (o pull anônimo pode funcionar para imagens públicas).
+
+## Execução local
 API:
 ```
 dotnet run --project ExpenseManagement/ExpenseApi.csproj
@@ -41,8 +53,10 @@ dotnet run --project ExpenseWeb/ExpenseWeb.csproj
 ```
 
 ## Migrações
+As migrations são aplicadas automaticamente na inicialização da API. Para rodar manualmente:
 ```
-dotnet ef database update --project ExpenseManagement/ExpenseApi.csproj
+dotnet ef database update --context AppDbContext --project ExpenseManagement
+dotnet ef database update --context ApplicationDbContext --project ExpenseManagement
 ```
 
 ## Autenticação

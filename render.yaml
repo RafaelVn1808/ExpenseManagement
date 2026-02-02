@@ -1,0 +1,65 @@
+# render.yaml - Blueprint para Render
+# Instruções: https://render.com/docs/blueprint-spec
+
+databases:
+  - name: expense-db
+    databaseName: expense
+    user: expense_user
+    plan: free  # free por 90 dias, depois $7/mês
+    region: oregon  # ou escolha: oregon, frankfurt, singapore, ohio
+
+services:
+  # API
+  - type: web
+    name: expense-api
+    runtime: docker
+    dockerfilePath: ./ExpenseManagement/Dockerfile
+    plan: free  # hiberna após 15 min sem uso
+    region: oregon
+    healthCheckPath: /health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__DefaultConnection
+        fromDatabase:
+          name: expense-db
+          property: connectionString
+      - key: Jwt__Key
+        generateValue: true  # gera automaticamente
+      - key: Jwt__Issuer
+        value: ExpenseApi
+      - key: Jwt__Audience
+        value: ExpenseWeb
+      - key: Jwt__ExpireHours
+        value: 2
+      - key: Jwt__RefreshTokenDays
+        value: 7
+      - key: Cors__AllowedOrigins__0
+        fromService:
+          type: web
+          name: expense-web
+          property: host
+          envVarKey: WEB_URL
+
+  # Web App
+  - type: web
+    name: expense-web
+    runtime: docker
+    dockerfilePath: ./ExpenseWeb/Dockerfile
+    plan: free
+    region: oregon
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ServiceUri__ExpenseApi
+        fromService:
+          type: web
+          name: expense-api
+          property: host
+          envVarKey: API_URL
+      - key: Jwt__Key
+        sync: false  # usa a mesma key da API
+      - key: Jwt__Issuer
+        value: ExpenseApi
+      - key: Jwt__Audience
+        value: ExpenseWeb

@@ -15,6 +15,7 @@
     <!-- Versão 7.x evita dependência de System.Runtime 9.0 no Azure (.NET 8) -->
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.0.3" />
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="8.0.11" />
   </ItemGroup>
 
 </Project>
