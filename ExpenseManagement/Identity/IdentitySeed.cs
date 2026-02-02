@@ -21,12 +21,8 @@ namespace ExpenseApi.Identity
             if (!await roleManager.RoleExistsAsync("User"))
                 await roleManager.CreateAsync(new IdentityRole("User"));
 
-            // 🔹 USUÁRIO ADMIN (somente em desenvolvimento e via variáveis/segredos)
-            if (!environment.IsDevelopment())
-            {
-                return;
-            }
-
+            // 🔹 USUÁRIO ADMIN: criado quando Admin:Email/Password ou ADMIN_EMAIL/ADMIN_PASSWORD estão definidos
+            // Em Produção (ex: Render): defina ADMIN_EMAIL e ADMIN_PASSWORD nas Environment Variables
             var adminEmail = configuration["Admin:Email"] ?? configuration["ADMIN_EMAIL"];
             var adminPassword = configuration["Admin:Password"] ?? configuration["ADMIN_PASSWORD"];
 
