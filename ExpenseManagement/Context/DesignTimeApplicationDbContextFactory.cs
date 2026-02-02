@@ -32,7 +32,7 @@ namespace ExpenseApi.Context
             }
 
             var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
-            optionsBuilder.UseSqlServer(connectionString);
+            optionsBuilder.UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__ApplicationDbContextMigrationsHistory"));
             return new ApplicationDbContext(optionsBuilder.Options);
         }
     }

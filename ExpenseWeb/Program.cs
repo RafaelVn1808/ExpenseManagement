@@ -3,6 +3,7 @@ using ExpenseWeb.Middlewares;
 using ExpenseWeb.Services;
 using ExpenseWeb.Services.Contracts;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);

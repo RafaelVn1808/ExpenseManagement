@@ -39,8 +39,8 @@ namespace ExpenseManagement.Repositories
                     (e.Installments <= 1 && e.StartDate >= fromVal && e.StartDate <= toVal)
                     || (e.Installments > 1
                         && e.StartDate <= toVal
-                        && EF.Functions.DateDiffMonth(e.StartDate, fromVal) >= 0
-                        && EF.Functions.DateDiffMonth(e.StartDate, fromVal) <= (e.Installments - 1)));
+                        && fromVal >= e.StartDate
+                        && fromVal <= e.StartDate.AddMonths(e.Installments - 1)));
             }
             else
             {
@@ -151,8 +151,8 @@ namespace ExpenseManagement.Repositories
                 .Where(e => e.UserId == userId &&
                     ((e.Installments <= 1 && e.StartDate >= from && e.StartDate <= to)
                      || (e.Installments > 1 && e.StartDate <= to
-                         && EF.Functions.DateDiffMonth(e.StartDate, from) >= 0
-                         && EF.Functions.DateDiffMonth(e.StartDate, from) <= (e.Installments - 1))))
+                         && from >= e.StartDate
+                         && from <= e.StartDate.AddMonths(e.Installments - 1))))
                 .ToListAsync();
         }
     }

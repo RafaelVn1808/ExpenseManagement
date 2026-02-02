@@ -45,7 +45,14 @@ if (string.IsNullOrWhiteSpace(defaultConnection))
 }
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(defaultConnection));
+{
+    options.UseNpgsql(defaultConnection, npgsql => 
+    {
+        npgsql.MigrationsHistoryTable("__AppDbContextMigrationsHistory");
+    });
+    // Configurar timestamp sem timezone para evitar problemas de UTC
+    AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+});
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());  
 builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
@@ -56,7 +63,14 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IImageUploadService, ImageUploadService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(defaultConnection));
+{
+    options.UseNpgsql(defaultConnection, npgsql => 
+    {
+        npgsql.MigrationsHistoryTable("__ApplicationDbContextMigrationsHistory");
+    });
+    // Configurar timestamp sem timezone para evitar problemas de UTC
+    AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+});
 
 
 builder.Services
@@ -192,6 +206,16 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHealthChecks("/health");
+
+// Executa migrations automaticamente na inicialização
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var appDbContext = services.GetRequiredService<AppDbContext>();
+    var appIdentityContext = services.GetRequiredService<ApplicationDbContext>();
+    await appDbContext.Database.MigrateAsync();
+    await appIdentityContext.Database.MigrateAsync();
+}
 
 using (var scope = app.Services.CreateScope())
 {
