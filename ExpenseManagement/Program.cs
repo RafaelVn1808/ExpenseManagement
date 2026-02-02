@@ -34,6 +34,33 @@ catch (Exception ex)
 
 static async Task RunAsync(WebApplicationBuilder builder)
 {
+    // Converte URI postgresql:// (Render, Heroku, etc.) para formato key=value esperado pelo Npgsql
+    static string ConvertPostgresUriToConnectionString(string uri)
+    {
+        var u = new Uri(uri);
+        var userInfo = u.UserInfo;
+        var username = "";
+        var password = "";
+        if (!string.IsNullOrEmpty(userInfo))
+        {
+            var colonIndex = userInfo.IndexOf(':');
+            if (colonIndex >= 0)
+            {
+                username = Uri.UnescapeDataString(userInfo[..colonIndex]);
+                password = Uri.UnescapeDataString(userInfo[(colonIndex + 1)..]);
+            }
+            else
+                username = Uri.UnescapeDataString(userInfo);
+        }
+        var host = u.Host;
+        var port = u.Port > 0 ? u.Port : 5432;
+        var database = u.AbsolutePath.TrimStart('/');
+        var sb = new StringBuilder();
+        sb.Append($"Host={host};Port={port};Database={database};Username={username};Password={password}");
+        sb.Append(";SSL Mode=Require"); // Render PostgreSQL usa SSL
+        return sb.ToString();
+    }
+
 // Add services to the container.
 
 // Connection string: appsettings, depois env ConnectionStrings__DefaultConnection, depois DATABASE_URL (Render)
@@ -46,6 +73,13 @@ if (string.IsNullOrWhiteSpace(defaultConnection))
     throw new InvalidOperationException(
         "ConnectionString não configurada. No Render: Environment → ConnectionStrings__DefaultConnection = Internal Database URL. " +
         "Ou use DATABASE_URL (Render injeta ao vincular o PostgreSQL).");
+}
+
+// Render e outros clouds enviam URI (postgresql://...). Npgsql no .NET espera formato key=value; converter.
+if (defaultConnection.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase)
+    || defaultConnection.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase))
+{
+    defaultConnection = ConvertPostgresUriToConnectionString(defaultConnection);
 }
 
 builder.Services.AddDbContext<AppDbContext>(options =>
