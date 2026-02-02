@@ -81,13 +81,16 @@ Cors__AllowedOrigins__0=https://expense-web.onrender.com
 **Environment Variables:**
 ```
 ServiceUri__ExpenseApi=https://expense-api.onrender.com
+ConnectionStrings__DefaultConnection=[MESMA INTERNAL DATABASE URL DO POSTGRESQL]
 Jwt__Key=UmaChaveSecretaComPeloMenos32Caracteres!!
 Jwt__Issuer=ExpenseApi
 Jwt__Audience=ExpenseWeb
 ASPNETCORE_ENVIRONMENT=Production
 ```
 
-**⚠️ IMPORTANTE:** Substitua `https://expense-api.onrender.com` pela URL real da API (você vê no dashboard da API)
+**⚠️ IMPORTANTE:**
+- Substitua `https://expense-api.onrender.com` pela URL real da API.
+- **ConnectionStrings__DefaultConnection:** use a **mesma Internal Database URL** do PostgreSQL (a mesma da API). Isso faz as chaves de sessão ficarem no banco e evita o erro "The key was not found in the key ring" após restart/hibernação.
 
 4. Clique em **Create Web Service**
 
@@ -186,6 +189,10 @@ Para API sempre disponível (produção real):
 ### CORS error
 - Verifique se adicionou a URL do ExpenseWeb no CORS da API
 - Use a URL HTTPS completa
+
+### "The key was not found in the key ring" (session cookie)
+- As chaves de sessão estavam no disco e se perdem a cada restart no Render.
+- **Solução:** No **expense-web** → **Environment**, adicione `ConnectionStrings__DefaultConnection` com a **mesma Internal Database URL** do PostgreSQL (a mesma da API). O Web passa a guardar as chaves no banco e o login continua válido após hibernação/restart.
 
 ### Timeout no primeiro acesso
 - Normal no free tier - aguarde ~30s
