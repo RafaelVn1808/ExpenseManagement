@@ -35,8 +35,14 @@
 - **Instance Type:** **Free** (hiberna após 15 min)
 
 **Environment Variables:**
+- **Key:** `ConnectionStrings__DefaultConnection` (com **dois underscores** `__`)
+- **Value:** cole a **Internal Database URL** do PostgreSQL (ex: `postgresql://user:senha@dpg-xxx-a.oregon-postgres.render.com/expense`)
+
+Não use aspas nem espaços. A URL vem no dashboard do PostgreSQL → **Info** → **Internal Database URL** (botão "Copy").
+
+Exemplo de variáveis:
 ```
-ConnectionStrings__DefaultConnection=[COLE A INTERNAL DATABASE URL AQUI]
+ConnectionStrings__DefaultConnection=postgresql://expense_user:xxxx@dpg-xxx.oregon-postgres.render.com/expense
 Jwt__Key=UmaChaveSecretaComPeloMenos32Caracteres!!
 Jwt__Issuer=ExpenseApi
 Jwt__Audience=ExpenseWeb
@@ -44,12 +50,12 @@ Jwt__ExpireHours=2
 Jwt__RefreshTokenDays=7
 ASPNETCORE_ENVIRONMENT=Production
 Cors__AllowedOrigins__0=https://expense-web.onrender.com
-Cors__AllowedOrigins__1=https://seu-expense-web.onrender.com
 ```
 
-**⚠️ IMPORTANTE:** Substitua:
-- `[COLE A INTERNAL DATABASE URL AQUI]` pela URL copiada no passo 1
-- `https://expense-web.onrender.com` pela URL que o Render vai gerar para o ExpenseWeb (você pode adicionar depois)
+**⚠️ IMPORTANTE:**
+- Nome da variável: exatamente `ConnectionStrings__DefaultConnection` (dois underscores).
+- Valor: a Internal Database URL completa, sem aspas e sem espaços no início/fim.
+- Se no Render você vincular o PostgreSQL ao Web Service, pode usar a variável `DATABASE_URL` (a API usa como fallback).
 
 4. Clique em **Create Web Service**
 
@@ -164,6 +170,14 @@ Para API sempre disponível (produção real):
 ---
 
 ## 🔧 Troubleshooting
+
+### "Format of the initialization string does not conform to specification"
+- A connection string está vazia ou com nome errado.
+- No **expense-api** → **Environment**:
+  1. Adicione a variável **Key:** `ConnectionStrings__DefaultConnection` (com **dois** underscores `__`).
+  2. **Value:** cole a **Internal Database URL** do PostgreSQL (dashboard do banco → **Info** → **Internal Database URL** → Copy).
+  3. Sem aspas, sem espaços no início/fim.
+- **Alternativa:** Vincule o PostgreSQL ao Web Service (dashboard da API → **Environment** → **Add from Render** → escolha o PostgreSQL). O Render injeta `DATABASE_URL` e a API usa como fallback.
 
 ### Erro nas migrations
 - Render aplica migrations automaticamente no startup

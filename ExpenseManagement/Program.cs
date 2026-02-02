@@ -36,12 +36,16 @@ static async Task RunAsync(WebApplicationBuilder builder)
 {
 // Add services to the container.
 
-// Validação: connection string (no Azure use Application Setting: ConnectionStrings__DefaultConnection)
-var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection");
+// Connection string: appsettings, depois env ConnectionStrings__DefaultConnection, depois DATABASE_URL (Render)
+var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+    ?? Environment.GetEnvironmentVariable("DATABASE_URL");
+defaultConnection = defaultConnection?.Trim();
 if (string.IsNullOrWhiteSpace(defaultConnection))
 {
     throw new InvalidOperationException(
-        "ConnectionString 'DefaultConnection' não configurada. No Azure: Application Settings → ConnectionStrings__DefaultConnection");
+        "ConnectionString não configurada. No Render: Environment → ConnectionStrings__DefaultConnection = Internal Database URL. " +
+        "Ou use DATABASE_URL (Render injeta ao vincular o PostgreSQL).");
 }
 
 builder.Services.AddDbContext<AppDbContext>(options =>
