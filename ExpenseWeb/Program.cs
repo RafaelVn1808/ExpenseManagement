@@ -139,7 +139,8 @@ builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
-// Criar tabela DataProtectionKeys no PostgreSQL (quando em uso) para persistir chaves entre restarts
+// Criar tabela DataProtectionKeys no PostgreSQL (quando em uso).
+// Usamos SQL explícito porque EnsureCreated() não cria tabelas se o banco já existir (ex.: criado pela API).
 if (!app.Environment.IsDevelopment())
 {
     try
@@ -147,7 +148,15 @@ if (!app.Environment.IsDevelopment())
         using var scope = app.Services.CreateScope();
         var dpContext = scope.ServiceProvider.GetService<DataProtectionDbContext>();
         if (dpContext != null)
-            await dpContext.Database.EnsureCreatedAsync();
+        {
+            await dpContext.Database.ExecuteSqlRawAsync("""
+                CREATE TABLE IF NOT EXISTS "DataProtectionKeys" (
+                    "Id" SERIAL PRIMARY KEY,
+                    "FriendlyName" TEXT NULL,
+                    "Xml" TEXT NULL
+                );
+                """);
+        }
     }
     catch
     {
