@@ -23,6 +23,8 @@ if (string.IsNullOrWhiteSpace(apiBaseUrl))
 builder.Services.AddHttpClient("ExpenseApi", client =>
 {
     client.BaseAddress = new Uri(apiBaseUrl.TrimEnd('/') + "/");
+    // Cold start no Render pode levar 1–2 min; retries somam ~3 min — timeout deve cobrir tudo
+    client.Timeout = TimeSpan.FromSeconds(300);
 })
 .AddPolicyHandler(GetExpenseApiRetryPolicy())
 .AddHttpMessageHandler<JwtHandler>(); // Adiciona o token JWT automaticamente em todas as requisições
@@ -67,7 +69,7 @@ static IAsyncPolicy<HttpResponseMessage> GetExpenseApiRetryPolicy()
     return HttpPolicyExtensions
         .HandleTransientHttpError()
         .OrResult(msg => msg.StatusCode == HttpStatusCode.TooManyRequests) // 429
-        .WaitAndRetryAsync(2, retryAttempt => TimeSpan.FromSeconds(retryAttempt == 1 ? 25 : 50));
+        .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(retryAttempt switch { 1 => 30, 2 => 60, _ => 90 }));
 }
 
 static string ConvertPostgresUriToConnectionString(string uri)

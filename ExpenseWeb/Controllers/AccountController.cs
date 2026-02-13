@@ -1,4 +1,5 @@
 using ExpenseWeb.Models;
+using ExpenseWeb.Services;
 using ExpenseWeb.Services.Contracts;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -33,7 +34,16 @@ namespace ExpenseWeb.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            var loginResponse = await _authService.LoginAsync(model.Email, model.Password);
+            LoginResponse? loginResponse;
+            try
+            {
+                loginResponse = await _authService.LoginAsync(model.Email, model.Password);
+            }
+            catch (ApiUnavailableException)
+            {
+                ModelState.AddModelError("", "Serviço temporariamente indisponível. Aguarde um momento e tente novamente.");
+                return View(model);
+            }
 
             if (loginResponse == null || string.IsNullOrEmpty(loginResponse.Token))
             {
@@ -81,7 +91,16 @@ namespace ExpenseWeb.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            var success = await _authService.RegisterAsync(model.Email, model.Password);
+            bool success;
+            try
+            {
+                success = await _authService.RegisterAsync(model.Email, model.Password);
+            }
+            catch (ApiUnavailableException)
+            {
+                ModelState.AddModelError("", "Serviço temporariamente indisponível. Aguarde um momento e tente novamente.");
+                return View(model);
+            }
 
             if (!success)
             {
