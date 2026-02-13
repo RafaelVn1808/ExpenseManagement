@@ -1,5 +1,6 @@
 using ExpenseWeb.Models;
 using ExpenseWeb.Services.Contracts;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 
@@ -27,7 +28,11 @@ namespace ExpenseWeb.Services
                     "application/json");
                 var response = await client.PostAsync("api/auth/login", content);
                 if (!response.IsSuccessStatusCode)
+                {
+                    if (response.StatusCode == HttpStatusCode.TooManyRequests || response.StatusCode == HttpStatusCode.ServiceUnavailable)
+                        throw new ApiUnavailableException();
                     return null;
+                }
                 var json = await response.Content.ReadAsStringAsync();
                 return JsonSerializer.Deserialize<LoginResponse>(json);
             }
@@ -48,6 +53,9 @@ namespace ExpenseWeb.Services
                     Encoding.UTF8,
                     "application/json");
                 var response = await client.PostAsync("api/auth/register", content);
+                if (!response.IsSuccessStatusCode &&
+                    (response.StatusCode == HttpStatusCode.TooManyRequests || response.StatusCode == HttpStatusCode.ServiceUnavailable))
+                    throw new ApiUnavailableException();
                 return response.IsSuccessStatusCode;
             }
             catch (HttpRequestException)
