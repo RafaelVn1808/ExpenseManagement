@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+using Polly;
+using Polly.Extensions.Http;
+using System.Net;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,6 +24,7 @@ builder.Services.AddHttpClient("ExpenseApi", client =>
 {
     client.BaseAddress = new Uri(apiBaseUrl.TrimEnd('/') + "/");
 })
+.AddPolicyHandler(GetExpenseApiRetryPolicy())
 .AddHttpMessageHandler<JwtHandler>(); // Adiciona o token JWT automaticamente em todas as requisições
 
 // 🔐 DATA PROTECTION: em Produção (Render) usa PostgreSQL para chaves sobreviverem a restarts
@@ -55,6 +59,15 @@ else
     builder.Services.AddDataProtection()
         .PersistKeysToFileSystem(dir)
         .SetApplicationName("ExpenseWeb");
+}
+
+/// <summary>Retry em 429/503/502 e erros transientes (ex.: API no Render acordando após inatividade).</summary>
+static IAsyncPolicy<HttpResponseMessage> GetExpenseApiRetryPolicy()
+{
+    return HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .OrResult(msg => msg.StatusCode == HttpStatusCode.TooManyRequests) // 429
+        .WaitAndRetryAsync(2, retryAttempt => TimeSpan.FromSeconds(retryAttempt == 1 ? 25 : 50));
 }
 
 static string ConvertPostgresUriToConnectionString(string uri)
