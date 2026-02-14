@@ -63,13 +63,34 @@ else
         .SetApplicationName("ExpenseWeb");
 }
 
-/// <summary>Retry em 429/503/502 e erros transientes (ex.: API no Render acordando após inatividade).</summary>
+/// <summary>Retry em 429/503/502 e erros transientes. Respeita Retry-After no 429 (rate limit do Render).</summary>
 static IAsyncPolicy<HttpResponseMessage> GetExpenseApiRetryPolicy()
 {
     return HttpPolicyExtensions
         .HandleTransientHttpError()
         .OrResult(msg => msg.StatusCode == HttpStatusCode.TooManyRequests) // 429
-        .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(retryAttempt switch { 1 => 30, 2 => 60, _ => 90 }));
+        .WaitAndRetryAsync(3, (retryAttempt, outcome, _) =>
+        {
+            var response = outcome.Result;
+            // Respeitar header Retry-After quando o Render (ou a API) envia 429
+            if (response?.Headers.RetryAfter != null)
+            {
+                var retryAfter = response.Headers.RetryAfter;
+                if (retryAfter.Delta.HasValue && retryAfter.Delta.Value > TimeSpan.Zero)
+                    return retryAfter.Delta.Value;
+                if (retryAfter.Date.HasValue)
+                {
+                    var delay = retryAfter.Date.Value - DateTimeOffset.UtcNow;
+                    if (delay > TimeSpan.Zero && delay < TimeSpan.FromMinutes(10))
+                        return delay;
+                }
+            }
+            // 429 no Render free tier: esperar mais entre retries para não piorar o rate limit
+            if (response?.StatusCode == HttpStatusCode.TooManyRequests)
+                return TimeSpan.FromSeconds(retryAttempt switch { 1 => 60, 2 => 120, _ => 180 });
+            // 503/502 (cold start etc.): 30s, 60s, 90s
+            return TimeSpan.FromSeconds(retryAttempt switch { 1 => 30, 2 => 60, _ => 90 });
+        });
 }
 
 static string ConvertPostgresUriToConnectionString(string uri)

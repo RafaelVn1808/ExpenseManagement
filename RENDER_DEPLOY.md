@@ -89,7 +89,7 @@ ASPNETCORE_ENVIRONMENT=Production
 ```
 
 **⚠️ IMPORTANTE:**
-- Substitua `https://expense-api.onrender.com` pela URL real da API.
+- **ServiceUri__ExpenseApi:** use a URL da API. Para evitar 429 (rate limit no free tier), prefira a **URL interna** da API: no dashboard da **expense-api** → **Connect** → aba **Internal** → copie o endereço (ex: `http://expense-api-abc1:10000`). Se usar a URL pública (`https://expense-api-xxx.onrender.com`), o login pode falhar com 429 em horários de pico.
 - **ConnectionStrings__DefaultConnection:** use a **mesma Internal Database URL** do PostgreSQL (a mesma da API). Isso faz as chaves de sessão ficarem no banco e evita o erro "The key was not found in the key ring" após restart/hibernação.
 
 4. Clique em **Create Web Service**
@@ -197,3 +197,16 @@ Para API sempre disponível (produção real):
 ### Timeout no primeiro acesso
 - Normal no free tier - aguarde ~30s
 - Configure UptimeRobot para manter ativo
+
+### 429 (Too Many Requests) ao fazer login
+- No tier gratuito, o Render aplica **rate limit** quando um serviço chama outro pela **URL pública** (internet). O ExpenseWeb chamando a API por `https://expense-api-xxx.onrender.com` pode receber 429.
+- **Solução recomendada — usar a rede privada do Render:**
+  1. No Dashboard do Render, abra o serviço **expense-api**.
+  2. No menu lateral, clique em **Connect** (ou em **Info**) e abra a aba **Internal**.
+  3. Copie o endereço interno (ex: `expense-api-abc1:10000`). A porta no Render costuma ser **10000**.
+  4. No serviço **expense-web** → **Environment**, altere `ServiceUri__ExpenseApi` para:
+     - `http://expense-api-abc1:10000`  
+     (substitua pelo host interno que você copiou; use `http://` e a porta indicada).
+  5. Salve e aguarde o redeploy. O tráfego entre os dois serviços passará pela **rede privada** e não sofrerá o rate limit.
+- **Requisitos:** API e Web na **mesma região** e no **mesmo workspace**. Serviços free podem **enviar** tráfego pela rede privada.
+- A aplicação também faz retries com esperas maiores em 429 e respeita o header `Retry-After`. Se ainda aparecer 429, use a URL interna acima.
