@@ -38,7 +38,16 @@ namespace ExpenseWeb.Services
             }
             catch (HttpRequestException)
             {
-                return null; // API inacessível (URL errada, timeout, etc.)
+                return null; // API inacessível (URL errada, etc.)
+            }
+            catch (TaskCanceledException)
+            {
+                // Timeout do HttpClient (ex.: API no Render demorando ou cold start)
+                throw new ApiUnavailableException("A API demorou para responder. Tente novamente em alguns instantes.");
+            }
+            catch (OperationCanceledException)
+            {
+                throw new ApiUnavailableException("A API demorou para responder. Tente novamente em alguns instantes.");
             }
         }
 
@@ -61,6 +70,14 @@ namespace ExpenseWeb.Services
             catch (HttpRequestException)
             {
                 return false; // API inacessível
+            }
+            catch (TaskCanceledException)
+            {
+                throw new ApiUnavailableException("A API demorou para responder. Tente novamente em alguns instantes.");
+            }
+            catch (OperationCanceledException)
+            {
+                throw new ApiUnavailableException("A API demorou para responder. Tente novamente em alguns instantes.");
             }
         }
 
