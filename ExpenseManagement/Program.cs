@@ -98,7 +98,19 @@ builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IExpenseService, ExpenseService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IImageUploadService, ImageUploadService>();
+
+// Supabase Storage para upload de imagens
+builder.Services.AddHttpClient("SupabaseStorage");
+builder.Services.AddScoped<IImageUploadService>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var config = sp.GetRequiredService<IConfiguration>();
+    var url = config["Supabase:Url"] ?? Environment.GetEnvironmentVariable("Supabase__Url") ?? "";
+    var key = config["Supabase:AnonKey"] ?? Environment.GetEnvironmentVariable("Supabase__AnonKey") ?? "";
+    var bucket = config["Supabase:StorageBucket"] ?? Environment.GetEnvironmentVariable("Supabase__StorageBucket") ?? "expense-images";
+    var client = httpClientFactory.CreateClient("SupabaseStorage");
+    return new ImageUploadService(client, url, key, bucket);
+});
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
@@ -149,12 +161,20 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-// CORS Configuration
+// CORS Configuration (origens via appsettings ou env Cors__AllowedOrigins separado por ;)
+var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+if (corsOrigins == null || corsOrigins.Length == 0)
+{
+    var corsEnv = Environment.GetEnvironmentVariable("Cors__AllowedOrigins");
+    corsOrigins = !string.IsNullOrWhiteSpace(corsEnv)
+        ? corsEnv.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        : new[] { "https://localhost:7000" };
+}
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowExpenseWeb", policy =>
     {
-        policy.WithOrigins(builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? new[] { "https://localhost:7000" })
+        policy.WithOrigins(corsOrigins!)
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
@@ -225,15 +245,9 @@ app.UseResponseCompression();
 app.UseMiddleware<ExceptionMiddleware>();
 // Configure the HTTP request pipeline.
 app.UseForwardedHeaders();
+// Swagger disponível apenas em Development (em produção fica oculto por segurança)
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Expense Management API"));
-}
-else
-{
-    // Em produ��o, proteger Swagger com autentica��o
     app.UseSwagger();
     app.UseSwaggerUI(options =>
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "Expense Management API"));
