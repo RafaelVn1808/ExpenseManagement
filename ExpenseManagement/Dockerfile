@@ -11,8 +11,8 @@ RUN dotnet publish "ExpenseApi.csproj" -c Release -o /app/publish /p:UseAppHost=
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 
-# Render injeta a variável PORT automaticamente (default: 10000)
-ENV ASPNETCORE_URLS=http://+:${PORT:-8080}
+# Remove Render PORT dependency, use 8080 explicitly
+ENV ASPNETCORE_URLS=http://+:8080
 EXPOSE 8080
 
 COPY --from=build /app/publish .

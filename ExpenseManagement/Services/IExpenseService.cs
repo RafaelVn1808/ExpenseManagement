@@ -7,7 +7,7 @@ namespace ExpenseManagement.Services
         Task<IEnumerable<ExpenseDTO>> GetAllExpensesAsync(string userId);
         Task<PagedResult<ExpenseDTO>> GetExpensesPagedAsync(ExpenseQueryParameters parameters, string userId);
         Task<ExpenseDTO?> GetExpensesByIdAsync(int id, string userId);
-        Task CreateExpensesAsync(ExpenseDTO expenseDTO, string userId);
+        Task<ExpenseDTO> CreateExpensesAsync(ExpenseDTO expenseDTO, string userId);
         Task UpdateExpenseAsync(ExpenseDTO expenseDTO, string userId);
         Task<ExpenseDTO?> DeleteExpenseAsync(int id, string userId);
         Task<DashboardStatsDto> GetDashboardStatsAsync(string userId, DateTime from, DateTime to);
