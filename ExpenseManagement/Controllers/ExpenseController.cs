@@ -95,19 +95,8 @@ namespace ExpenseManagement.Controllers
                 return BadRequest("Tipo de arquivo não suportado. Use JPEG, PNG ou WEBP.");
             }
 
-            var relativeUrl = await _imageUploadService.SaveExpenseImageAsync(file);
-            var baseUrl = _configuration["PublicBaseUrl"];
-            if (string.IsNullOrWhiteSpace(baseUrl))
-            {
-                baseUrl = $"{Request.Scheme}://{Request.Host}";
-            }
-            else
-            {
-                baseUrl = baseUrl.TrimEnd('/');
-            }
-            var absoluteUrl = $"{baseUrl}{relativeUrl}";
-
-            return Ok(new { url = absoluteUrl });
+            var imageUrl = await _imageUploadService.SaveExpenseImageAsync(file);
+            return Ok(new { url = imageUrl });
         }
 
         [HttpPost("delete-image")]

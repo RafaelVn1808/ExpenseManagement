@@ -16,8 +16,9 @@ Aplicação para controle de despesas com autenticação, autorização por role
 ## Stack
 - .NET 8, ASP.NET Core Web API, ASP.NET Core MVC
 - EF Core, AutoMapper, ASP.NET Identity
-- PostgreSQL (Npgsql)
-- xUnit, Moq
+- PostgreSQL (Npgsql) / Supabase
+- Supabase Storage (imagens)
+- xUnit, Moq, FluentAssertions
 - Docker, Docker Compose
 
 ## Requisitos
@@ -28,6 +29,8 @@ Aplicação para controle de despesas com autenticação, autorização por role
 1. Copie `.env.example` para `.env` e preencha os valores (obrigatório: `JWT_KEY` com mínimo 32 caracteres).
 2. Para execução local sem Docker: ajuste a connection string em `ExpenseManagement/appsettings.json` (formato PostgreSQL).
 3. A URL da API em `ExpenseWeb` é configurada via `ServiceUri__ExpenseApi` (no Docker usa `http://expense-api:8080`).
+4. **Supabase Storage:** Configure `Supabase__Url` e `Supabase__AnonKey` para upload de imagens. Crie o bucket `expense-images` no painel Supabase (Storage).
+5. **Deploy (API Oracle, Front Vercel, DB Supabase):** Use variáveis de ambiente: `ConnectionStrings__DefaultConnection` (Supabase), `Cors__AllowedOrigins` (origens separadas por `;`), `Supabase__Url`, `Supabase__AnonKey`, `AllowedHosts`.
 
 ## Execução com Docker (recomendado)
 ```bash
@@ -74,8 +77,7 @@ dotnet ef database update --context ApplicationDbContext --project ExpenseManage
 - `GET /api/category`
 
 ## Upload de imagens
-O upload é feito via API e salvo em `wwwroot/uploads/expenses`. A URL retornada é armazenada na despesa.
+O upload é feito via API e enviado ao **Supabase Storage** (bucket `expense-images`). A URL pública retornada é armazenada na despesa. Configure `Supabase__Url` e `Supabase__AnonKey`.
 
 ## Observações
-- O Swagger/OpenAPI fica exposto apenas em desenvolvimento.
-- Em produção, o endpoint OpenAPI exige autenticação.
+- O Swagger/OpenAPI fica exposto apenas em ambiente Development.
