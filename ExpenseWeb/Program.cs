@@ -23,8 +23,8 @@ if (string.IsNullOrWhiteSpace(apiBaseUrl))
 builder.Services.AddHttpClient("ExpenseApi", client =>
 {
     client.BaseAddress = new Uri(apiBaseUrl.TrimEnd('/') + "/");
-    // Cold start no Render pode levar 1–2 min; retries somam ~3 min — timeout deve cobrir tudo
-    client.Timeout = TimeSpan.FromSeconds(300);
+    // Reduzido timeout de 300s (usado para cold start no Render) para 30s
+    client.Timeout = TimeSpan.FromSeconds(30);
 })
 .AddPolicyHandler(GetExpenseApiRetryPolicy())
 .AddHttpMessageHandler<JwtHandler>(); // Adiciona o token JWT automaticamente em todas as requisições
@@ -37,13 +37,6 @@ dataProtectionConnection = dataProtectionConnection?.Trim();
 
 if (!builder.Environment.IsDevelopment() && !string.IsNullOrWhiteSpace(dataProtectionConnection))
 {
-    // Converter URI postgresql:// para formato key=value (mesmo que na API)
-    if (dataProtectionConnection.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase)
-        || dataProtectionConnection.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase))
-    {
-        dataProtectionConnection = ConvertPostgresUriToConnectionString(dataProtectionConnection);
-    }
-
     var conn = dataProtectionConnection;
     builder.Services.AddDbContext<DataProtectionDbContext>(options =>
         options.UseNpgsql(conn, npgsql => npgsql.MigrationsHistoryTable("__DataProtectionMigrationsHistory")));
@@ -63,40 +56,12 @@ else
         .SetApplicationName("ExpenseWeb");
 }
 
-/// <summary>Retry em 429/503/502 e erros transientes (ex.: API no Render acordando ou rate limit 429).</summary>
+/// <summary>Retry em 429/503/502 e erros transientes.</summary>
 static IAsyncPolicy<HttpResponseMessage> GetExpenseApiRetryPolicy()
 {
     return HttpPolicyExtensions
         .HandleTransientHttpError()
-        .OrResult(msg => msg.StatusCode == HttpStatusCode.TooManyRequests) // 429
-        // Delays maiores (60/120/180s) para 429 no Render; cobre também cold start
-        .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(retryAttempt switch { 1 => 60, 2 => 120, _ => 180 }));
-}
-
-static string ConvertPostgresUriToConnectionString(string uri)
-{
-    var u = new Uri(uri);
-    var userInfo = u.UserInfo;
-    var username = "";
-    var password = "";
-    if (!string.IsNullOrEmpty(userInfo))
-    {
-        var colonIndex = userInfo.IndexOf(':');
-        if (colonIndex >= 0)
-        {
-            username = Uri.UnescapeDataString(userInfo[..colonIndex]);
-            password = Uri.UnescapeDataString(userInfo[(colonIndex + 1)..]);
-        }
-        else
-            username = Uri.UnescapeDataString(userInfo);
-    }
-    var host = u.Host;
-    var port = u.Port > 0 ? u.Port : 5432;
-    var database = u.AbsolutePath.TrimStart('/');
-    var sb = new StringBuilder();
-    sb.Append($"Host={host};Port={port};Database={database};Username={username};Password={password}");
-    sb.Append(";SSL Mode=Require");
-    return sb.ToString();
+        .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 }
 
 // 🔐 SESSION (OBRIGATÓRIO)

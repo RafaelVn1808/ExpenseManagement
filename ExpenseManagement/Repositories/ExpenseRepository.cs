@@ -17,6 +17,7 @@ namespace ExpenseManagement.Repositories
         public async Task<IEnumerable<Expense>> GetExpenses(string userId)
         {
             return await _context.Expenses
+                .AsNoTracking()
                 .Include(c => c.Category)
                 .Where(e => e.UserId == userId)
                 .ToListAsync();
@@ -25,6 +26,7 @@ namespace ExpenseManagement.Repositories
         public async Task<PagedResult<Expense>> GetExpensesPaged(ExpenseQueryParameters parameters, string userId)
         {
             var query = _context.Expenses
+                .AsNoTracking()
                 .Include(c => c.Category)
                 .Where(e => e.UserId == userId);
 
@@ -94,6 +96,8 @@ namespace ExpenseManagement.Repositories
 
         public async Task<Expense?> GetExpenseId(int expenseId, string userId)
         {
+            // Note: Since this is used for Update/Delete, we don't apply AsNoTracking here 
+            // as EF needs to track it to modify/delete it smoothly without re-attaching.
             return await _context.Expenses
                 .Include(c => c.Category)
                 .Where(e => e.ExpenseId == expenseId && e.UserId == userId)
@@ -147,6 +151,7 @@ namespace ExpenseManagement.Repositories
         public async Task<IEnumerable<Expense>> GetExpensesForStats(string userId, DateTime from, DateTime to)
         {
             return await _context.Expenses
+                .AsNoTracking()
                 .Include(c => c.Category)
                 .Where(e => e.UserId == userId &&
                     ((e.Installments <= 1 && e.StartDate >= from && e.StartDate <= to)

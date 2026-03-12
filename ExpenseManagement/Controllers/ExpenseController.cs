@@ -139,18 +139,8 @@ namespace ExpenseManagement.Controllers
             
             try
             {
-                await _service.CreateExpensesAsync(expenseDTO, userId);
-                
-                // Buscar a despesa criada para retornar com o ID correto
-                var createdExpenses = await _service.GetAllExpensesAsync(userId);
-                var createdExpense = createdExpenses.OrderByDescending(e => e.ExpenseId).FirstOrDefault();
-                
-                if (createdExpense != null)
-                {
-                    return new CreatedAtRouteResult("ObterExpense", new { id = createdExpense.ExpenseId }, createdExpense);
-                }
-                
-                return CreatedAtAction(nameof(GetById), new { id = expenseDTO.ExpenseId }, expenseDTO);
+                var createdExpense = await _service.CreateExpensesAsync(expenseDTO, userId);
+                return new CreatedAtRouteResult("ObterExpense", new { id = createdExpense.ExpenseId }, createdExpense);
             }
             catch (Exception ex)
             {

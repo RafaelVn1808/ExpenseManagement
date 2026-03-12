@@ -60,7 +60,7 @@ namespace ExpenseManagement.Services
             return _mapper.Map<ExpenseDTO>(expenseEntity);
         }
 
-        public async Task CreateExpensesAsync(ExpenseDTO expenseDto, string userId)
+        public async Task<ExpenseDTO> CreateExpensesAsync(ExpenseDTO expenseDto, string userId)
         {
             await ValidateExpenseAsync(expenseDto);
 
@@ -77,7 +77,8 @@ namespace ExpenseManagement.Services
             expenseEntity.UserId = userId; // Garantir que o userId seja do usuário autenticado
             expenseEntity.CreatedAt = DateTime.UtcNow;
 
-            await _expenseRepository.Create(expenseEntity);
+            var createdEntity = await _expenseRepository.Create(expenseEntity);
+            return _mapper.Map<ExpenseDTO>(createdEntity);
         }
 
         public async Task UpdateExpenseAsync(ExpenseDTO expenseDto, string userId)

@@ -57,7 +57,7 @@ static async Task RunAsync(WebApplicationBuilder builder)
         var database = u.AbsolutePath.TrimStart('/');
         var sb = new StringBuilder();
         sb.Append($"Host={host};Port={port};Database={database};Username={username};Password={password}");
-        sb.Append(";SSL Mode=Require"); // Render PostgreSQL usa SSL
+        sb.Append(";SSL Mode=Require"); // PostgreSQL em Cloud provider geralmene requer SSL
         return sb.ToString();
     }
 
@@ -213,8 +213,15 @@ builder.Services.AddHealthChecks();
 
 
 
+// Add Response Compression
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+});
+
 var app = builder.Build();
 
+app.UseResponseCompression();
 app.UseMiddleware<ExceptionMiddleware>();
 // Configure the HTTP request pipeline.
 app.UseForwardedHeaders();
