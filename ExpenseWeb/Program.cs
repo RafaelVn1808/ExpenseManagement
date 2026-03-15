@@ -74,7 +74,8 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
     if (!builder.Environment.IsDevelopment())
     {
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        // Permite HTTP quando não há HTTPS (deploy OCI sem SSL)
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
         options.Cookie.SameSite = SameSiteMode.Lax;
     }
 });
@@ -95,7 +96,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.SlidingExpiration = true;
         if (!builder.Environment.IsDevelopment())
         {
-            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
             options.Cookie.SameSite = SameSiteMode.Lax;
         }
     });
@@ -153,7 +154,9 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// Desabilitar em deploy HTTP (OCI sem SSL) - evita redirecionar para HTTPS inexistente
+if (app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
