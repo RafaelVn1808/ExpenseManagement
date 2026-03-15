@@ -26,7 +26,7 @@ namespace ExpenseManagement.Services
             if (string.IsNullOrWhiteSpace(_supabaseUrl) || string.IsNullOrWhiteSpace(_supabaseAnonKey))
             {
                 throw new InvalidOperationException(
-                    "Supabase não configurado. Defina Supabase__Url e Supabase__AnonKey.");
+                    "Supabase não configurado. Defina Supabase__Url e Supabase__ServiceRoleKey.");
             }
 
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();

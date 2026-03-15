@@ -106,7 +106,7 @@ builder.Services.AddScoped<IImageUploadService>(sp =>
     var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
     var config = sp.GetRequiredService<IConfiguration>();
     var url = config["Supabase:Url"] ?? Environment.GetEnvironmentVariable("Supabase__Url") ?? "";
-    var key = config["Supabase:AnonKey"] ?? Environment.GetEnvironmentVariable("Supabase__AnonKey") ?? "";
+    var key = config["Supabase:ServiceRoleKey"] ?? Environment.GetEnvironmentVariable("Supabase__ServiceRoleKey") ?? "";
     var bucket = config["Supabase:StorageBucket"] ?? Environment.GetEnvironmentVariable("Supabase__StorageBucket") ?? "expense-images";
     var client = httpClientFactory.CreateClient("SupabaseStorage");
     return new ImageUploadService(client, url, key, bucket);

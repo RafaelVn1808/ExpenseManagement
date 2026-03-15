@@ -1,11 +1,23 @@
-﻿{
+{
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "profiles": {
+    "executable": {
+      "commandName": "Executable",
+      "executablePath": "dotnet",
+      "commandLineArgs": "exec bin/Debug/net8.0/ExpenseWeb.dll",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:7222;http://localhost:5177",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "https://localhost:7222;http://localhost:5177"
+      }
+    },
     "http": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
-      "applicationUrl": "http://localhost:5167",
+      "applicationUrl": "http://localhost:5177",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
@@ -14,7 +26,7 @@
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
-      "applicationUrl": "https://localhost:7211;http://localhost:5167",
+      "applicationUrl": "https://localhost:7222;http://localhost:5177",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
