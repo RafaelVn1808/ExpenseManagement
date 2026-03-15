@@ -253,7 +253,9 @@ if (app.Environment.IsDevelopment())
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "Expense Management API"));
 }
 
-app.UseHttpsRedirection();
+// Desabilitar em deploy HTTP (OCI sem SSL)
+if (app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 // CORS deve vir antes de Authentication e Authorization
