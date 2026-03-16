@@ -368,4 +368,5 @@ FodyWeavers.xsd
 # Appsettings com dados sensíveis (connection strings, JWT, Supabase)
 **/appsettings.json
 **/appsettings.Development.json
+**/appsettings.Production.json
 !**/appsettings*.example.json
