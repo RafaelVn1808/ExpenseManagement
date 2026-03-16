@@ -364,3 +364,8 @@ FodyWeavers.xsd
 
 # Environment configuration files
 .env
+
+# Appsettings com dados sensíveis (connection strings, JWT, Supabase)
+**/appsettings.json
+**/appsettings.Development.json
+!**/appsettings*.example.json
