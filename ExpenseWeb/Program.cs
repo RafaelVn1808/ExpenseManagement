@@ -156,7 +156,7 @@ if (!app.Environment.IsDevelopment())
 
 // Desabilitar em deploy HTTP (OCI sem SSL) - evita redirecionar para HTTPS inexistente
 if (app.Environment.IsDevelopment())
-    app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();

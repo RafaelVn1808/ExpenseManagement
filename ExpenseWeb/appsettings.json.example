@@ -1,0 +1,18 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "ServiceUri": {
+    "ExpenseApi": "URL_DA_API"
+  },
+  "Jwt": {
+    "Key": "SUA_CHAVE_JWT_MINIMO_32_CARACTERES",
+    "Issuer": "ExpenseApi",
+    "Audience": "ExpenseWeb",
+    "ExpireHours": 2
+  }
+}

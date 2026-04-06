@@ -1,0 +1,28 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Port=5432;Database=expense;Username=postgres;Password=COLOQUE_SUA_SENHA"
+  },
+  "Jwt": {
+    "Key": "SUA_CHAVE_JWT_MINIMO_32_CARACTERES",
+    "Issuer": "ExpenseApi",
+    "Audience": "ExpenseWeb"
+  },
+  "Cors": {
+    "AllowedOrigins": [
+      "https://localhost:7211",
+      "https://localhost:7000",
+      "http://localhost:5167"
+    ]
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "Supabase": {
+    "Url": "SUA_URL_SUPABASE",
+    "AnonKey": "SUA_ANON_KEY",
+    "StorageBucket": "expense-images"
+  }
+}
