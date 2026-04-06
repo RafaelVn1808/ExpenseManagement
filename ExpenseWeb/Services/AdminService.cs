@@ -65,5 +65,12 @@ namespace ExpenseWeb.Services
             var response = await client.PostAsync($"api/admin/users/{userId}/roles", content);
             return response.IsSuccessStatusCode;
         }
+
+        public async Task<bool> DeleteUserAsync(string userId)
+        {
+            var client = _httpClientFactory.CreateClient("ExpenseApi");
+            var response = await client.DeleteAsync($"api/admin/users/{Uri.EscapeDataString(userId)}");
+            return response.IsSuccessStatusCode;
+        }
     }
 }

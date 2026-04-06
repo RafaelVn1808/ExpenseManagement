@@ -2,6 +2,7 @@
 
 @{
     ViewData["Title"] = "Permissões";
+    var currentUserId = ViewBag.CurrentUserId as string ?? string.Empty;
 }
 
 <div class="container">
@@ -23,7 +24,7 @@
                     <th>Email</th>
                     <th>Admin</th>
                     <th>User</th>
-                    <th>Ação</th>
+                    <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
@@ -51,6 +52,18 @@
                                 <input type="hidden" name="UserId" value="@user.Id" />
                                 <button type="submit" class="btn btn-sm btn-primary">Salvar</button>
                             </form>
+                            @if (user.Id != currentUserId)
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-danger ms-1 btn-delete-user"
+                                        data-user-id="@user.Id"
+                                        data-user-email="@user.Email">
+                                    <i class="bi bi-trash"></i> Excluir
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="text-muted small ms-1">(você)</span>
+                            }
                         </td>
                     </tr>
                 }
@@ -59,3 +72,41 @@
         </table>
     </div>
 </div>
+
+<!-- Modal Confirmar Exclusão de Usuário -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger bg-opacity-10">
+                <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Excluir usuário</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir o usuário <strong id="deleteUserEmail"></strong>?</p>
+                <p class="text-muted small mb-0">Todas as despesas e imagens vinculadas a este usuário serão excluídas. Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteUserForm" method="post" asp-action="DeleteUser" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="userId" id="deleteUserIdInput" />
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i> Sim, excluir</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.btn-delete-user').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var id = this.getAttribute('data-user-id');
+                var email = this.getAttribute('data-user-email');
+                document.getElementById('deleteUserIdInput').value = id || '';
+                document.getElementById('deleteUserEmail').textContent = email || '';
+                new bootstrap.Modal(document.getElementById('deleteUserModal')).show();
+            });
+        });
+    </script>
+}

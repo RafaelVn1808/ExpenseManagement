@@ -6,5 +6,6 @@ namespace ExpenseWeb.Services.Contracts
     {
         Task<IReadOnlyList<AdminUserViewModel>> GetUsersAsync();
         Task<bool> UpdateUserRolesAsync(string userId, IEnumerable<string> roles);
+        Task<bool> DeleteUserAsync(string userId);
     }
 }

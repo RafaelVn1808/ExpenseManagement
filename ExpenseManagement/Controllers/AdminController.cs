@@ -1,5 +1,6 @@
 using ExpenseApi.Identity;
 using ExpenseApi.Models;
+using ExpenseManagement.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -15,15 +16,18 @@ namespace ExpenseApi.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IExpenseService _expenseService;
         private readonly ILogger<AdminController> _logger;
 
         public AdminController(
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager,
+            IExpenseService expenseService,
             ILogger<AdminController> logger)
         {
             _userManager = userManager;
             _roleManager = roleManager;
+            _expenseService = expenseService;
             _logger = logger;
         }
 
@@ -130,6 +134,47 @@ namespace ExpenseApi.Controllers
                 Email = user.Email ?? string.Empty,
                 Roles = updatedRoles.ToList()
             });
+        }
+
+        [HttpDelete("users/{userId}")]
+        public async Task<IActionResult> DeleteUser(string userId)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.Equals(currentUserId, userId, StringComparison.Ordinal))
+            {
+                return BadRequest(new { message = "Você não pode excluir sua própria conta." });
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                return NotFound(new { message = "Usuário não encontrado." });
+            }
+
+            try
+            {
+                var expenses = await _expenseService.GetAllExpensesAsync(userId);
+                foreach (var expense in expenses)
+                {
+                    await _expenseService.DeleteExpenseAsync(expense.ExpenseId, userId);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Erro ao excluir despesas do usuário {UserId} antes da exclusão. Continuando.", userId);
+            }
+
+            var deleteResult = await _userManager.DeleteAsync(user);
+            if (!deleteResult.Succeeded)
+            {
+                _logger.LogWarning("Falha ao excluir usuário {UserId}: {Errors}",
+                    userId,
+                    string.Join(", ", deleteResult.Errors.Select(e => e.Description)));
+                return BadRequest(new { message = "Falha ao excluir usuário: " + string.Join(" ", deleteResult.Errors.Select(e => e.Description)) });
+            }
+
+            _logger.LogInformation("Usuário {UserId} ({Email}) excluído por admin.", userId, user.Email);
+            return NoContent();
         }
     }
 }

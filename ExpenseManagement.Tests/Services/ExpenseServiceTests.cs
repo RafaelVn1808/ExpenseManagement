@@ -6,6 +6,7 @@ using ExpenseManagement.Models;
 using ExpenseManagement.Repositories;
 using ExpenseManagement.Services;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 
@@ -15,6 +16,8 @@ namespace ExpenseManagement.Tests.Services
     {
         private readonly Mock<IExpenseRepository> _expenseRepositoryMock;
         private readonly Mock<ICategoryRepository> _categoryRepositoryMock;
+        private readonly Mock<IImageUploadService> _imageUploadServiceMock;
+        private readonly Mock<ILogger<ExpenseService>> _loggerMock;
         private readonly IMapper _mapper;
         private readonly ExpenseService _expenseService;
         private readonly string _testUserId = "user-123";
@@ -23,6 +26,8 @@ namespace ExpenseManagement.Tests.Services
         {
             _expenseRepositoryMock = new Mock<IExpenseRepository>();
             _categoryRepositoryMock = new Mock<ICategoryRepository>();
+            _imageUploadServiceMock = new Mock<IImageUploadService>();
+            _loggerMock = new Mock<ILogger<ExpenseService>>();
 
             // Configurar AutoMapper
             var config = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>());
@@ -35,7 +40,9 @@ namespace ExpenseManagement.Tests.Services
             _expenseService = new ExpenseService(
                 _expenseRepositoryMock.Object,
                 _categoryRepositoryMock.Object,
-                _mapper);
+                _imageUploadServiceMock.Object,
+                _mapper,
+                _loggerMock.Object);
         }
 
         [Fact]
@@ -404,6 +411,9 @@ namespace ExpenseManagement.Tests.Services
             };
 
             _expenseRepositoryMock
+                .Setup(r => r.GetExpenseId(expenseId, _testUserId))
+                .ReturnsAsync(expense);
+            _expenseRepositoryMock
                 .Setup(r => r.Delete(expenseId, _testUserId))
                 .ReturnsAsync(expense);
 
@@ -413,6 +423,7 @@ namespace ExpenseManagement.Tests.Services
             // Assert
             result.Should().NotBeNull();
             result!.ExpenseId.Should().Be(expenseId);
+            _expenseRepositoryMock.Verify(r => r.GetExpenseId(expenseId, _testUserId), Times.Once);
             _expenseRepositoryMock.Verify(r => r.Delete(expenseId, _testUserId), Times.Once);
         }
 
@@ -422,7 +433,7 @@ namespace ExpenseManagement.Tests.Services
             // Arrange
             var expenseId = 999;
             _expenseRepositoryMock
-                .Setup(r => r.Delete(expenseId, _testUserId))
+                .Setup(r => r.GetExpenseId(expenseId, _testUserId))
                 .ReturnsAsync((Expense?)null);
 
             // Act
@@ -430,7 +441,8 @@ namespace ExpenseManagement.Tests.Services
 
             // Assert
             result.Should().BeNull();
-            _expenseRepositoryMock.Verify(r => r.Delete(expenseId, _testUserId), Times.Once);
+            _expenseRepositoryMock.Verify(r => r.GetExpenseId(expenseId, _testUserId), Times.Once);
+            _expenseRepositoryMock.Verify(r => r.Delete(expenseId, _testUserId), Times.Never);
         }
     }
 }

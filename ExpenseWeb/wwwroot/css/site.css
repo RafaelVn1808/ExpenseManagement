@@ -29,3 +29,88 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+/* Layout responsivo para mobile (celular, tablet) */
+@media (max-width: 767.98px) {
+  html {
+    font-size: 15px;
+  }
+
+  body {
+    margin-bottom: 80px;
+  }
+
+  /* Área de toque mínima para boa usabilidade em touch (44px recomendado) */
+  .btn,
+  .nav-link,
+  .form-control,
+  .form-select {
+    min-height: 44px;
+  }
+
+  .btn-group-sm .btn,
+  .btn-sm {
+    min-height: 40px;
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* Container com padding adequado em telas pequenas */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    max-width: 100%;
+  }
+
+  /* Cards com espaçamento melhor em mobile */
+  .card {
+    margin-bottom: 1rem;
+  }
+
+  .card-body {
+    padding: 1rem;
+  }
+
+  /* Tabela responsiva - scroll horizontal em mobile */
+  .table-responsive {
+    margin: 0 -1rem;
+    padding: 0 1rem;
+  }
+
+  /* Cards mobile - lista de despesas em telas pequenas */
+  .expense-mobile-cards .expense-mobile-card {
+    padding: 1rem 1rem;
+  }
+
+  .expense-mobile-cards .expense-mobile-card:last-child {
+    border-bottom: none !important;
+  }
+
+  .expense-mobile-actions .btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Navbar colapsada - melhor espaçamento entre itens */
+  .navbar-collapse .navbar-nav .nav-item {
+    margin-bottom: 0.25rem;
+  }
+
+  .navbar-collapse .navbar-nav .nav-item:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Footer com padding adequado em mobile */
+  .footer {
+    padding: 1rem 0 !important;
+    font-size: 0.85rem;
+  }
+}
+
+/* Melhorias para tablets (768px - 991px) */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .container {
+    max-width: 100%;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+}

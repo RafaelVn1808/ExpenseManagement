@@ -10,13 +10,22 @@ namespace ExpenseManagement.Services
     {
         private readonly IExpenseRepository _expenseRepository;
         private readonly ICategoryRepository _categoryRepository;
+        private readonly IImageUploadService _imageUploadService;
         private readonly IMapper _mapper;
+        private readonly ILogger<ExpenseService> _logger;
 
-        public ExpenseService(IExpenseRepository expenseRepository, ICategoryRepository categoryRepository, IMapper mapper)
+        public ExpenseService(
+            IExpenseRepository expenseRepository,
+            ICategoryRepository categoryRepository,
+            IImageUploadService imageUploadService,
+            IMapper mapper,
+            ILogger<ExpenseService> logger)
         {
             _expenseRepository = expenseRepository;
             _categoryRepository = categoryRepository;
+            _imageUploadService = imageUploadService;
             _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<IEnumerable<ExpenseDTO>> GetAllExpensesAsync(string userId)
@@ -105,11 +114,27 @@ namespace ExpenseManagement.Services
 
         public async Task<ExpenseDTO?> DeleteExpenseAsync(int id, string userId)
         {
-            var expense = await _expenseRepository.Delete(id, userId);
-
+            var expense = await _expenseRepository.GetExpenseId(id, userId);
             if (expense == null)
                 return null;
 
+            // Excluir imagens do Storage antes de remover a despesa do banco
+            foreach (var url in new[] { expense.NoteImageUrl, expense.ProofImageUrl })
+            {
+                if (!string.IsNullOrWhiteSpace(url))
+                {
+                    try
+                    {
+                        await _imageUploadService.DeleteExpenseImageAsync(url);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Falha ao excluir imagem do Storage ao deletar despesa {ExpenseId}: {Url}", id, url);
+                    }
+                }
+            }
+
+            await _expenseRepository.Delete(id, userId);
             return _mapper.Map<ExpenseDTO>(expense);
         }
 

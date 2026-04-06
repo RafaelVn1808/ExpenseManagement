@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using ExpenseWeb.Models;
 using ExpenseWeb.Services.Contracts;
 using Microsoft.AspNetCore.Authorization;
@@ -21,6 +22,7 @@ namespace ExpenseWeb.Controllers
             try
             {
                 var users = await _adminService.GetUsersAsync();
+                ViewBag.CurrentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 return View(users);
             }
             catch (UnauthorizedAccessException ex)
@@ -51,6 +53,30 @@ namespace ExpenseWeb.Controllers
 
             TempData[success ? "SuccessMessage" : "ErrorMessage"] =
                 success ? "Permissões atualizadas com sucesso." : "Falha ao atualizar permissões.";
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteUser(string userId)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                TempData["ErrorMessage"] = "Usuário inválido.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.Equals(currentUserId, userId, StringComparison.Ordinal))
+            {
+                TempData["ErrorMessage"] = "Você não pode excluir sua própria conta.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var success = await _adminService.DeleteUserAsync(userId);
+            TempData[success ? "SuccessMessage" : "ErrorMessage"] =
+                success ? "Usuário excluído com sucesso." : "Falha ao excluir usuário.";
 
             return RedirectToAction(nameof(Index));
         }
